@@ -1,0 +1,51 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: healthcare-postgres
+    environment:
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare
+      POSTGRES_DB: healthcare_ai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+  chromadb:
+    image: chromadb/chroma
+    container_name: healthcare-chroma
+    ports:
+      - "8001:8000"
+
+
+  backend:
+    build:
+      context: ./backend
+    container_name: healthcare-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - postgres
+      - chromadb
+
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: healthcare-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+
+volumes:
+  postgres_data:
+
