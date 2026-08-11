@@ -9,6 +9,8 @@ from app.tools.database_tool import (
     get_documents_for_case
 )
 
+from app.audit.service import record_event
+
 
 class CaseWorkflow:
 
@@ -65,6 +67,14 @@ class CaseWorkflow:
             )
         )
 
+        record_event(
+            case_id=case_id,
+            agent="Data Quality Agent",
+            action="VALIDATE_CASE",
+            status=data_quality.get("quality_status", "UNKNOWN"),
+            result=str(data_quality),
+        )
+
         # =========================================================
         # 4. Process Agent
         # =========================================================
@@ -74,6 +84,14 @@ class CaseWorkflow:
                 case,
                 data_quality
             )
+        )
+
+        record_event(
+            case_id=case_id,
+            agent="Process Agent",
+            action="ANALYZE_WORKFLOW",
+            status="ANALYZED",
+            result=str(process_analysis),
         )
 
         # =========================================================
@@ -90,6 +108,14 @@ class CaseWorkflow:
             )
         )
 
+        record_event(
+            case_id=case_id,
+            agent="Medical Agent",
+            action="MEDICAL_ANALYSIS",
+            status="COMPLETED",
+            result=str(medical_result),
+        )
+
         # =========================================================
         # 6. Triage Agent
         # =========================================================
@@ -98,6 +124,14 @@ class CaseWorkflow:
             self.triage_agent.run(
                 case
             )
+        )
+
+        record_event(
+            case_id=case_id,
+            agent="Triage Agent",
+            action="RISK_ASSESSMENT",
+            status=triage_result.get("priority", "UNKNOWN"),
+            result=str(triage_result),
         )
 
         # =========================================================
@@ -118,6 +152,14 @@ class CaseWorkflow:
                 medical_result=medical_result,
                 triage_result=triage_result
             )
+        )
+
+        record_event(
+            case_id=case_id,
+            agent="Governance Agent",
+            action="GOVERNANCE_DECISION",
+            status=governance_result.get("decision", "UNKNOWN"),
+            result=str(governance_result),
         )
 
         # =========================================================

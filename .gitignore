@@ -15,3 +15,4 @@ frontend/dist/
 *.backup
 *.before-*
 *.py[cod]
+backend/audit.log
