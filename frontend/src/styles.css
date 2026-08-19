@@ -767,6 +767,104 @@ button {
    SECTIONS
 ========================================================= */
 
+/* =========================================================
+   EXECUTION HISTORY / AUDIT TRAIL
+   ========================================================= */
+
+.execution-history {
+  position: relative;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20px;
+}
+
+.history-event {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: 14px;
+  position: relative;
+  min-height: 92px;
+}
+
+.history-marker {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.history-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.04);
+  z-index: 2;
+}
+
+.history-line {
+  position: absolute;
+  top: 21px;
+  bottom: 0;
+  width: 1px;
+  background: currentColor;
+  opacity: 0.18;
+}
+
+.history-content {
+  min-width: 0;
+  padding-bottom: 24px;
+}
+
+.history-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.history-top strong {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.history-status {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.history-action {
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.history-result {
+  margin-top: 7px;
+  font-size: 12px;
+  line-height: 1.55;
+  opacity: 0.78;
+  overflow-wrap: anywhere;
+}
+
+.history-timestamp {
+  margin-top: 8px;
+  font-size: 10px;
+  opacity: 0.5;
+  font-variant-numeric: tabular-nums;
+}
+
 .section-block {
   margin-top: 24px;
 }
@@ -1507,4 +1605,143 @@ button {
   .review-status {
     display: none;
   }
+}
+
+
+/* =========================================================
+   HUMAN REVIEW ACTIONS
+   ========================================================= */
+
+.review-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 220px;
+}
+
+.review-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.review-button {
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.review-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.review-button:disabled {
+  cursor: wait;
+  opacity: 0.5;
+}
+
+.review-button.approve {
+  color: #287a52;
+}
+
+.review-button.approve:hover:not(:disabled) {
+  background: rgba(40, 122, 82, 0.08);
+}
+
+.review-button.changes {
+  color: #8a6a21;
+}
+
+.review-button.changes:hover:not(:disabled) {
+  background: rgba(138, 106, 33, 0.08);
+}
+
+.review-button.reject {
+  color: #a34444;
+}
+
+.review-button.reject:hover:not(:disabled) {
+  background: rgba(163, 68, 68, 0.08);
+}
+
+.review-success {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(40, 122, 82, 0.25);
+  border-radius: 8px;
+  color: #287a52;
+  background: rgba(40, 122, 82, 0.06);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* =========================================================
+   HUMAN REVIEW RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+  .review-actions {
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .review-buttons {
+    justify-content: stretch;
+  }
+
+  .review-button {
+    flex: 1 1 100%;
+  }
+
+}
+
+/* =========================================================
+   VIEW SWITCHER
+========================================================= */
+
+.view-switcher {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 6px;
+  border: 1px solid #d9e2ec;
+  border-radius: 12px;
+  background: #f5f8fb;
+  width: fit-content;
+}
+
+.view-switcher-button {
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: transparent;
+  color: #52606d;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.view-switcher-button:hover {
+  background: #e8eef5;
+}
+
+.view-switcher-button.active {
+  background: #ffffff;
+  color: #16324f;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
 }

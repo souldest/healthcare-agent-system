@@ -9,7 +9,7 @@ from app.tools.database_tool import (
     get_documents_for_case
 )
 
-from app.audit.service import record_event
+from app.audit.service import record_event, get_latest_human_review
 
 
 class CaseWorkflow:
@@ -163,7 +163,73 @@ class CaseWorkflow:
         )
 
         # =========================================================
-        # 8. Workflow Recommendation
+        # 8. Human Review Gate
+        # =========================================================
+
+        latest_review = get_latest_human_review(case_id)
+
+        if governance_result.get("decision") == "HUMAN_REVIEW":
+
+            # -----------------------------------------------------
+            # Human reviewer has approved the case.
+            # The governance gate may now be passed.
+            # -----------------------------------------------------
+
+            if latest_review and latest_review.get("status") == "APPROVED":
+
+                record_event(
+                    case_id=case_id,
+                    agent="Governance Agent",
+                    action="HUMAN_REVIEW_GATE",
+                    status="APPROVED",
+                    result=(
+                        "Human review approved. "
+                        "Workflow may continue."
+                    ),
+                )
+
+                governance_result = {
+                    **governance_result,
+                    "decision": "APPROVED",
+                    "gate": "PASSED",
+                    "human_review_required": False,
+                    "human_review": latest_review,
+                }
+
+            # -----------------------------------------------------
+            # No approval or an explicit rejection/change request.
+            # Keep the workflow paused.
+            # -----------------------------------------------------
+
+            else:
+
+                record_event(
+                    case_id=case_id,
+                    agent="Governance Agent",
+                    action="HUMAN_REVIEW_GATE",
+                    status="WAITING_FOR_HUMAN",
+                    result="Workflow paused pending human review.",
+                )
+
+                return {
+                    "workflow": self.name,
+                    "case_id": case_id,
+                    "data_quality": data_quality,
+                    "process_analysis": process_analysis,
+                    "medical_analysis": medical_result,
+                    "triage": triage_result,
+                    "governance": governance_result,
+                    "recommendation": (
+                        "Workflow paused. Human review required "
+                        "before further processing."
+                    ),
+                    "human_review_required": True,
+                    "status": "waiting_for_human_review",
+                    "human_review": latest_review,
+                }
+
+        # =========================================================
+        # 9. Workflow Recommendation
         # =========================================================
 
         recommendation = (
@@ -213,6 +279,15 @@ class CaseWorkflow:
         process_analysis,
         governance_result
     ):
+
+        if governance_result.get(
+            "decision"
+        ) == "APPROVED":
+
+            return (
+                "Fachliche Prüfung abgeschlossen. "
+                "Workflow kann kontrolliert fortgesetzt werden."
+            )
 
         if governance_result.get(
             "decision"

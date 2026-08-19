@@ -145,3 +145,75 @@ export async function searchRag(
   );
 }
 
+
+
+/*
+ * Agent Execution History
+ */
+export async function getCaseHistory(caseId) {
+
+  if (!caseId) {
+    throw new Error(
+      "Keine Case-ID angegeben."
+    );
+  }
+
+  return request(
+    `/agents/history/${caseId}`
+  );
+}
+
+
+/*
+ * Human Review
+ */
+export async function submitHumanReview(
+  caseId,
+  decision,
+  reviewer = "Human Reviewer",
+  comment = null
+) {
+
+  if (!caseId) {
+    throw new Error(
+      "Keine Case-ID angegeben."
+    );
+  }
+
+  return request(
+    `/agents/review/${caseId}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        decision,
+        reviewer,
+        comment
+      })
+    }
+  );
+}
+
+
+/*
+ * Versicherer-Portal
+ */
+export async function getInsurerCases() {
+
+  return request(
+    "/insurer/cases"
+  );
+}
+
+
+export async function getInsurerCase(caseId) {
+
+  if (!caseId) {
+    throw new Error(
+      "Keine Case-ID angegeben."
+    );
+  }
+
+  return request(
+    `/insurer/cases/${caseId}`
+  );
+}

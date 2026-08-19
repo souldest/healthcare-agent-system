@@ -3,8 +3,23 @@ import { useEffect, useMemo, useState } from "react";
 import {
   getPatients,
   getCases,
-  analyzeCase
+  analyzeCase,
+  getCaseHistory,
+  submitHumanReview
 } from "./api";
+
+import KpiCard from "./components/KpiCard";
+import PriorityBadge from "./components/PriorityBadge";
+import EmptyAnalysis from "./components/EmptyAnalysis";
+import AuditTrail from "./components/AuditTrail";
+import GovernancePanel from "./components/GovernancePanel";
+import MedicalAnalysis from "./components/MedicalAnalysis";
+import CaseAssessment from "./components/CaseAssessment";
+import MemberPortal from "./components/MemberPortal";
+import {
+  ArchitectureStep,
+  FlowArrow
+} from "./components/Architecture";
 
 
 function App() {
@@ -14,11 +29,16 @@ function App() {
 
   const [selectedCase, setSelectedCase] = useState(null);
   const [analysis, setAnalysis] = useState(null);
+  const [history, setHistory] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewMessage, setReviewMessage] = useState(null);
 
   const [error, setError] = useState(null);
+
+  const [view, setView] = useState("operations");
 
 
   useEffect(() => {
@@ -66,12 +86,51 @@ function App() {
       setAnalyzing(true);
       setError(null);
 
+      // ---------------------------------------------------------
+      // Derselbe Fall ist bereits geöffnet:
+      // keine neue Agent-Pipeline starten.
+      // Nur den aktuellen Audit Trail laden.
+      // ---------------------------------------------------------
+
+      if (selectedCase?.id === caseItem.id && analysis) {
+
+        const historyResult =
+          await getCaseHistory(caseItem.id);
+
+        setHistory(
+          historyResult?.history || []
+        );
+
+        return;
+      }
+
+      // ---------------------------------------------------------
+      // Neuen Fall auswählen.
+      // ---------------------------------------------------------
+
       setSelectedCase(caseItem);
       setAnalysis(null);
+      setHistory([]);
 
-      const result = await analyzeCase(caseItem.id);
+      // ---------------------------------------------------------
+      // Einmalige Analyse.
+      // ---------------------------------------------------------
+
+      const result =
+        await analyzeCase(caseItem.id);
 
       setAnalysis(result);
+
+      // ---------------------------------------------------------
+      // Audit Trail nach der Analyse laden.
+      // ---------------------------------------------------------
+
+      const historyResult =
+        await getCaseHistory(caseItem.id);
+
+      setHistory(
+        historyResult?.history || []
+      );
 
     } catch (err) {
 
@@ -85,6 +144,72 @@ function App() {
       setAnalyzing(false);
     }
   }
+
+
+
+  async function handleHumanReview(
+    decision,
+    comment = null
+  ) {
+
+    if (!selectedCase?.id) {
+      return;
+    }
+
+    try {
+
+      setReviewing(true);
+      setReviewMessage(null);
+      setError(null);
+
+      await submitHumanReview(
+        selectedCase.id,
+        decision,
+        "Demo Reviewer",
+        comment
+      );
+
+      // Analyse nach Human Review neu laden,
+      // damit Governance, Status und Recommendation
+      // sofort den aktuellen Backend-Zustand zeigen.
+      const result =
+        await analyzeCase(selectedCase.id);
+
+      setAnalysis(result);
+
+      // Audit Trail aktualisieren, ohne eine
+      // zusätzliche Pipeline-Ausführung zu erzeugen.
+      const historyResult =
+        await getCaseHistory(
+          selectedCase.id
+        );
+
+      setHistory(
+        historyResult?.history || []
+      );
+
+      setReviewMessage(
+        decision === "APPROVED"
+          ? "Fall wurde freigegeben."
+          : decision === "REJECTED"
+            ? "Fall wurde abgelehnt."
+            : "Änderungen wurden angefordert."
+      );
+
+    } catch (err) {
+
+      setError(
+        err.message ||
+        "Human Review konnte nicht gespeichert werden."
+      );
+
+    } finally {
+
+      setReviewing(false);
+
+    }
+  }
+
 
 
   function getPatient(patientId) {
@@ -187,6 +312,42 @@ function App() {
       ===================================================== */}
 
       <main className="dashboard">
+
+        <div className="view-switcher">
+
+          <button
+            type="button"
+            className={
+              view === "operations"
+                ? "view-switcher-button active"
+                : "view-switcher-button"
+            }
+            onClick={() => setView("operations")}
+          >
+            BKK AI Operations
+          </button>
+
+          <button
+            type="button"
+            className={
+              view === "insurer"
+                ? "view-switcher-button active"
+                : "view-switcher-button"
+            }
+            onClick={() => setView("insurer")}
+          >
+            Versicherer-Portal
+          </button>
+
+        </div>
+
+        {view === "insurer" ? (
+
+          <MemberPortal />
+
+        ) : (
+
+          <>
 
         <section className="page-heading">
 
@@ -425,6 +586,10 @@ function App() {
                       )
                     : null
                 }
+                history={history}
+                reviewing={reviewing}
+                reviewMessage={reviewMessage}
+                handleHumanReview={handleHumanReview}
               />
 
             )}
@@ -514,124 +679,11 @@ function App() {
 
         </footer>
 
+          </>
+
+        )}
+
       </main>
-
-    </div>
-  );
-}
-
-
-/* =============================================================
-   KPI CARD
-============================================================= */
-
-function KpiCard({
-  label,
-  value,
-  description,
-  icon,
-  positive,
-  warning
-}) {
-
-  return (
-
-    <div className="kpi-card">
-
-      <div className="kpi-top">
-
-        <span className="kpi-label">
-          {label}
-        </span>
-
-        <span
-          className={
-            warning
-              ? "kpi-icon warning"
-              : positive
-                ? "kpi-icon positive"
-                : "kpi-icon"
-          }
-        >
-          {icon}
-        </span>
-
-      </div>
-
-
-      <div className="kpi-value">
-        {value}
-      </div>
-
-
-      <div className="kpi-description">
-        {description}
-      </div>
-
-    </div>
-  );
-}
-
-
-/* =============================================================
-   PRIORITY
-============================================================= */
-
-function PriorityBadge({ priority }) {
-
-  const normalized =
-    priority || "UNKNOWN";
-
-  return (
-
-    <span
-      className={`priority-badge ${normalized.toLowerCase()}`}
-    >
-      <span className="priority-dot" />
-      {normalized}
-    </span>
-  );
-}
-
-
-/* =============================================================
-   EMPTY STATE
-============================================================= */
-
-function EmptyAnalysis() {
-
-  return (
-
-    <div className="empty-analysis">
-
-      <div className="empty-symbol">
-        AI
-      </div>
-
-      <div className="panel-kicker">
-        CASE INTELLIGENCE
-      </div>
-
-      <h2>
-        Select a case
-      </h2>
-
-      <p>
-        Wähle einen Fall aus der linken Liste,
-        um den vollständigen Agentic-AI-Workflow
-        auszuführen.
-      </p>
-
-
-      <div className="empty-features">
-
-        <span>✓ Data Quality</span>
-        <span>✓ Process Analysis</span>
-        <span>✓ Medical AI</span>
-        <span>✓ RAG</span>
-        <span>✓ Human Review</span>
-
-      </div>
 
     </div>
   );
@@ -645,7 +697,11 @@ function EmptyAnalysis() {
 function AnalysisResult({
   analysis,
   selectedCase,
-  patient
+  patient,
+  history,
+  reviewing,
+  reviewMessage,
+  handleHumanReview
 }) {
 
   const medical =
@@ -685,9 +741,17 @@ function AnalysisResult({
     medical?.rag_findings || [];
 
 
+  const reviewApproved =
+    governance?.decision === "APPROVED" &&
+    governance?.gate === "PASSED" &&
+    governance?.human_review_required === false;
+
   const humanReview =
-    analysis?.human_review_required === true ||
-    governance?.human_review_required === true;
+    !reviewApproved &&
+    (
+      analysis?.human_review_required === true ||
+      governance?.human_review_required === true
+    );
 
   const governanceRules =
     governance?.rules_triggered || [];
@@ -749,573 +813,36 @@ function AnalysisResult({
       </div>
 
 
-      {/* HUMAN REVIEW */}
-
-      {humanReview && (
-
-        <div className="human-review">
-
-          <div className="review-icon">
-            !
-          </div>
-
-          <div className="review-content">
-
-            <strong>
-              Human Review erforderlich
-            </strong>
-
-            <span>
-              {governanceReason}
-            </span>
-
-            {governanceRules.length > 0 && (
-              <span>
-                Rules: {governanceRules.join(" · ")}
-              </span>
-            )}
-
-          </div>
-
-          <div className="review-status">
-            {governance?.gate || "ACTIVE"}
-          </div>
-
-        </div>
-
-      )}
-
-
-      {governance?.decision && (
-
-        <div className="section-block governance-block">
-
-          <div className="section-header">
-
-            <div>
-
-              <div className="panel-kicker">
-                GOVERNANCE
-              </div>
-
-              <h3>
-                Entscheidungs-Gate
-              </h3>
-
-            </div>
-
-            <span className="ai-label">
-              {governance.decision}
-            </span>
-
-          </div>
-
-          <div className="triage-box">
-
-            <div className="triage-reason">
-              <span>
-                Entscheidungsgrundlage
-              </span>
-              <p>
-                {governanceReason}
-              </p>
-            </div>
-
-            <div className="triage-action">
-              <span>
-                Review-Gate
-              </span>
-              <strong>
-                {governance.gate || "ACTIVE"}
-              </strong>
-            </div>
-
-          </div>
-
-        </div>
-      )}
-
-
-      {/* AGENT STATUS */}
-
-      <div className="section-block">
-
-        <div className="section-header">
-
-          <div>
-
-            <div className="panel-kicker">
-              ORCHESTRATION
-            </div>
-
-            <h3>
-              Agent Pipeline
-            </h3>
-
-          </div>
-
-          <span className="completed-label">
-            COMPLETED
-          </span>
-
-        </div>
-
-
-        <div className="agent-pipeline">
-
-          <PipelineStep
-            number="01"
-            name="Data Quality"
-            status={
-              dataQuality.quality_status === "VALID"
-                ? "VALID"
-                : "REVIEW"
-            }
-          />
-
-          <PipelineLine />
-
-          <PipelineStep
-            number="02"
-            name="Process Agent"
-            status="ANALYZED"
-          />
-
-          <PipelineLine />
-
-          <PipelineStep
-            number="03"
-            name="Medical Agent"
-            status={
-              ragFindings.length > 0
-                ? `COMPLETED · ${ragFindings.length} RAG`
-                : "COMPLETED"
-            }
-          />
-
-          <PipelineLine />
-
-          <PipelineStep
-            number="04"
-            name="Triage Agent"
-            status={
-              triage.priority || "UNKNOWN"
-            }
-          />
-
-          <PipelineLine />
-
-          <PipelineStep
-            number="05"
-            name="Governance Agent"
-            status={
-              analysis?.governance?.decision ||
-              (humanReview
-                ? "HUMAN_REVIEW"
-                : "CLEAR")
-            }
-          />
-
-        </div>
-
-      </div>
-
-
-      {/* PROCESS + QUALITY */}
-
-      <div className="two-column">
-
-
-        <div className="info-card">
-
-          <div className="info-card-label">
-            DATA QUALITY
-          </div>
-
-          <div className="info-card-value">
-
-            <span className="success-mark">
-              ✓
-            </span>
-
-            {dataQuality.quality_status ||
-              "UNKNOWN"}
-
-          </div>
-
-          <div className="info-card-detail">
-
-            {dataQuality.document_count || 0}
-            {" "}unterstützendes Dokument
-
-          </div>
-
-          {dataQuality.issues?.length > 0 && (
-
-            <div className="quality-issues">
-
-              {dataQuality.issues.map(
-                (issue, index) => (
-                  <div key={index}>
-                    {issue}
-                  </div>
-                )
-              )}
-
-            </div>
-
-          )}
-
-        </div>
-
-
-        <div className="info-card">
-
-          <div className="info-card-label">
-            PROCESS ANALYSIS
-          </div>
-
-          <div className="process-name">
-            {process.process ||
-              "Not available"}
-          </div>
-
-          <div className="process-route">
-
-            <span>
-              {process.current_step ||
-                "-"}
-            </span>
-
-            <span className="route-arrow">
-              →
-            </span>
-
-            <span>
-              {process.next_step ||
-                "-"}
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* TRIAGE */}
-
-      <div className="section-block">
-
-        <div className="section-header">
-
-          <div>
-
-            <div className="panel-kicker">
-              RISIKOBEWERTUNG
-            </div>
-
-            <h3>
-              Triage-Entscheidung
-            </h3>
-
-          </div>
-
-          <PriorityBadge
-            priority={triage.priority}
-          />
-
-        </div>
-
-
-        <div className="triage-box">
-
-          <div className="triage-reason">
-
-            <span>
-              Entscheidungsgrundlage
-            </span>
-
-            <p>
-              {triage.reason ||
-                "Keine Begründung verfügbar."}
-            </p>
-
-          </div>
-
-
-          <div className="triage-action">
-
-            <span>
-              Empfohlene Maßnahme
-            </span>
-
-            <strong>
-              {analysis.recommendation ||
-                "Manual review"}
-            </strong>
-
-          </div>
-
-        </div>
-
-      </div>
-
-
-      {/* MEDICAL ANALYSIS */}
-
-      <div className="section-block">
-
-        <div className="section-header">
-
-          <div>
-
-            <div className="panel-kicker">
-              AI ANALYSIS
-            </div>
-
-            <h3>
-              Medizinische Befunde
-            </h3>
-
-          </div>
-
-          <span className="ai-label">
-            LLM + RAG
-          </span>
-
-        </div>
-
-
-        <div className="summary-box">
-
-          {medicalAnalysis.summary ||
-            "Keine Zusammenfassung verfügbar."}
-
-        </div>
-
-
-        {findings.length > 0 && (
-
-          <div className="findings">
-
-            {findings.map(
-              (finding, index) => (
-
-                <div
-                  className="finding"
-                  key={index}
-                >
-
-                  <span>
-                    {String(index + 1).padStart(
-                      2,
-                      "0"
-                    )}
-                  </span>
-
-                  <p>
-                    {finding}
-                  </p>
-
-                </div>
-
-              )
-            )}
-
-          </div>
-
-        )}
-
-      </div>
-
-
-      {/* RAG */}
-
-      <div className="section-block">
-
-        <div className="section-header">
-
-          <div>
-
-            <div className="panel-kicker">
-              KNOWLEDGE RETRIEVAL
-            </div>
-
-            <h3>
-              RAG-Nachweise
-            </h3>
-
-          </div>
-
-          <span className="ai-label">
-            {ragFindings.length} Dokument abgerufen
-          </span>
-
-        </div>
-
-
-        {ragFindings.length > 0 ? (
-
-          <div className="rag-list">
-
-            {ragFindings.map(
-              (item, index) => (
-
-                <div
-                  className="rag-card"
-                  key={index}
-                >
-
-                  <div className="rag-top">
-
-                    <span>
-                      SOURCE {String(index + 1).padStart(
-                        2,
-                        "0"
-                      )}
-                    </span>
-
-                    <span>
-                      {item.filename ||
-                        "Medical document"}
-                    </span>
-
-                  </div>
-
-
-                  <p>
-                    {item.content}
-                  </p>
-
-
-                  {item.distance !== undefined && (
-
-                    <div className="similarity">
-
-                      Retrieval distance:{" "}
-                      {Number(
-                        item.distance
-                      ).toFixed(4)}
-
-                    </div>
-
-                  )}
-
-                </div>
-
-              )
-            )}
-
-          </div>
-
-        ) : (
-
-          <div className="muted">
-            Keine RAG-Ergebnisse vorhanden.
-          </div>
-
-        )}
-
-      </div>
-
-
-      {/* DOCUMENTS */}
-
-      <div className="section-block">
-
-        <div className="section-header">
-
-          <div>
-
-            <div className="panel-kicker">
-              DATENQUELLEN
-            </div>
-
-            <h3>
-              Documents
-            </h3>
-
-          </div>
-
-          <span className="document-count">
-            {documents.length}
-          </span>
-
-        </div>
-
-
-        <div className="documents">
-
-          {documents.length > 0 ? (
-
-            documents.map(
-              (document, index) => (
-
-                <div
-                  className="document-row"
-                  key={index}
-                >
-
-                  <span className="document-icon">
-                    DOC
-                  </span>
-
-                  <div>
-
-                    <strong>
-                      {document.filename ||
-                        "Document"}
-                    </strong>
-
-                    <span>
-                      {document.document_type ||
-                        "medical_report"}
-                    </span>
-
-                  </div>
-
-                  <span className="document-status">
-                    INDEXIERT
-                  </span>
-
-                </div>
-
-              )
-            )
-
-          ) : (
-
-            <div className="muted">
-              Keine Dokumente vorhanden.
-            </div>
-
-          )}
-
-        </div>
-
-      </div>
-
-
-      {/* RECOMMENDATION */}
-
-      <div className="recommendation-box">
-
-        <div className="recommendation-kicker">
-          EMPFOHLENE MAßNAHME
-        </div>
-
-        <h3>
-          {medicalAnalysis.recommended_action ||
-            "Manual review required"}
-        </h3>
-
-        <p>
-          KI-Unterstützung mit kontrollierter
-          Übergabe an qualifizierte Mitarbeitende.
-        </p>
-
-      </div>
+      <GovernancePanel
+        humanReview={humanReview}
+        governance={governance}
+        governanceReason={governanceReason}
+        governanceRules={governanceRules}
+        reviewing={reviewing}
+        reviewMessage={reviewMessage}
+        onReview={handleHumanReview}
+      />
+
+
+      <AuditTrail history={history} />
+
+
+      <CaseAssessment
+        analysis={analysis}
+        dataQuality={dataQuality}
+        process={process}
+        triage={triage}
+        ragFindings={ragFindings}
+        humanReview={humanReview}
+      />
+
+
+      <MedicalAnalysis
+        medicalAnalysis={medicalAnalysis}
+        findings={findings}
+        ragFindings={ragFindings}
+        documents={documents}
+      />
 
 
       <div className="disclaimer">
@@ -1333,99 +860,6 @@ function AnalysisResult({
 
       </div>
 
-    </div>
-  );
-}
-
-
-/* =============================================================
-   PIPELINE COMPONENTS
-============================================================= */
-
-function PipelineStep({
-  number,
-  name,
-  status
-}) {
-
-  return (
-
-    <div className="pipeline-step">
-
-      <div className="pipeline-number">
-        {number}
-      </div>
-
-      <div className="pipeline-name">
-        {name}
-      </div>
-
-      <div className="pipeline-status">
-        {status}
-      </div>
-
-    </div>
-  );
-}
-
-
-function PipelineLine() {
-
-  return (
-    <div className="pipeline-line">
-      →
-    </div>
-  );
-}
-
-
-/* =============================================================
-   ARCHITECTURE
-============================================================= */
-
-function ArchitectureStep({
-  number,
-  title,
-  description,
-  final
-}) {
-
-  return (
-
-    <div
-      className={
-        final
-          ? "architecture-step final"
-          : "architecture-step"
-      }
-    >
-
-      <div className="architecture-number">
-        {number}
-      </div>
-
-      <div>
-
-        <strong>
-          {title}
-        </strong>
-
-        <span>
-          {description}
-        </span>
-
-      </div>
-
-    </div>
-  );
-}
-
-
-function FlowArrow() {
-
-  return (
-    <div className="flow-arrow">
-      →
     </div>
   );
 }

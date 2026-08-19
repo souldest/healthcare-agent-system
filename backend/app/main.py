@@ -5,6 +5,8 @@ from app.api import patients
 from app.api import cases
 from app.api import documents
 from app.api import rag
+from app.api import insurer
+from app.api import member
 
 
 app = FastAPI(
@@ -32,6 +34,14 @@ app.include_router(
 
 app.include_router(
     agents.router
+)
+
+app.include_router(
+    insurer.router
+)
+
+app.include_router(
+    member.router
 )
 
 @app.get("/")

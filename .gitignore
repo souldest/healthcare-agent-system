@@ -16,3 +16,17 @@ frontend/dist/
 *.before-*
 *.py[cod]
 backend/audit.log
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Frontend build
+frontend/dist/
+
+# Node
+frontend/node_modules/
+
+# Local environment
+.venv/
