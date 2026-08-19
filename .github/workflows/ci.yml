@@ -44,6 +44,22 @@ jobs:
         run: |
           python -m compileall app
 
+      - name: Backend environment diagnostics
+        working-directory: backend
+        run: |
+          echo "=== Python ==="
+          python --version
+          python -m pytest --version
+
+          echo "=== Python executable ==="
+          python -c "import sys; print(sys.executable)"
+
+          echo "=== Package versions ==="
+          python -c "import fastapi, starlette, pydantic, httpx; print('fastapi=', fastapi.__version__); print('starlette=', starlette.__version__); print('pydantic=', pydantic.__version__); print('httpx=', httpx.__version__)"
+
+          echo "=== Pytest collection ==="
+          python -m pytest --collect-only -v
+
       - name: Backend tests
         working-directory: backend
         run: |
