@@ -46,7 +46,12 @@ jobs:
 
       - name: Backend tests
         working-directory: backend
-        run: python -m pytest -v
+        run: |
+          set +e
+          python -m pytest -v
+          TEST_EXIT=$?
+          echo "PYTEST_EXIT_CODE=$TEST_EXIT"
+          exit $TEST_EXIT
 
   frontend:
     name: Frontend CI
