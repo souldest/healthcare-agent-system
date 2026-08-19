@@ -47,11 +47,18 @@ jobs:
       - name: Backend tests
         working-directory: backend
         run: |
+          set -euxo pipefail
+          echo "=== ENVIRONMENT ==="
           python --version
           python -m pip --version
           python -m pytest --version
+          echo "=== LOCATION ==="
           pwd
+          echo "=== FILES ==="
           find . -maxdepth 2 -type f | sort
+          echo "=== PYTEST COLLECTION ==="
+          python -m pytest --collect-only -q
+          echo "=== PYTEST RUN ==="
           python -m pytest -v
 
   frontend:
