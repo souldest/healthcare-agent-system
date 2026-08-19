@@ -49,16 +49,17 @@ jobs:
         run: |
           echo "=== Python ==="
           python --version
+          which python
           python -m pytest --version
 
-          echo "=== Python executable ==="
-          python -c "import sys; print(sys.executable)"
-
           echo "=== Package versions ==="
-          python -c "import fastapi, starlette, pydantic, httpx; print('fastapi=', fastapi.__version__); print('starlette=', starlette.__version__); print('pydantic=', pydantic.__version__); print('httpx=', httpx.__version__)"
+          python -m pip show fastapi starlette pydantic httpx
 
-          echo "=== Pytest collection ==="
-          python -m pytest --collect-only -v
+          echo "=== Installed packages ==="
+          python -m pip freeze | sort
+
+          echo "=== Import versions ==="
+          python -c "import fastapi, starlette, pydantic, httpx; print('fastapi=', fastapi.__version__); print('starlette=', starlette.__version__); print('pydantic=', pydantic.__version__); print('httpx=', httpx.__version__)"
 
       - name: Backend tests
         working-directory: backend
