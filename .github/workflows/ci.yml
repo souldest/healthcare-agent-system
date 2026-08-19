@@ -47,11 +47,22 @@ jobs:
       - name: Backend tests
         working-directory: backend
         run: |
+          echo "::group::Running backend pytest"
           set +e
           python -m pytest -v
           TEST_EXIT=$?
+          set -e
+          echo "::endgroup::"
+
+          echo "========================================"
           echo "PYTEST_EXIT_CODE=$TEST_EXIT"
-          exit $TEST_EXIT
+          echo "========================================"
+
+          if [ "$TEST_EXIT" -ne 0 ]; then
+            echo "::error title=Backend tests failed::pytest exited with code $TEST_EXIT"
+          fi
+
+          exit "$TEST_EXIT"
 
   frontend:
     name: Frontend CI
