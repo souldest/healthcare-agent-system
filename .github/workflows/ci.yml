@@ -64,7 +64,7 @@ jobs:
       - name: Backend tests
         working-directory: backend
         run: |
-          python -m pytest -v
+          python -m pytest -v -s --tb=long
 
   frontend:
     name: Frontend CI
