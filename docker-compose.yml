@@ -24,6 +24,9 @@ services:
     container_name: healthcare-backend
     ports:
       - "8002:8000"
+    environment:
+      CHROMA_HOST: healthcare-chroma
+      CHROMA_PORT: "8000"
     volumes:
       - ./backend:/app
     depends_on:

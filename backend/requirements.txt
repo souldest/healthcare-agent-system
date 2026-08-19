@@ -9,3 +9,7 @@ langchain
 langgraph
 chromadb
 requests
+
+# Testing
+pytest
+httpx
