@@ -28,10 +28,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Install security scanner
+        run: |
+          python -m pip install pip-audit
+
+      - name: Dependency security scan
+        working-directory: backend
+        run: |
+          pip-audit \
+            -r requirements.txt \
+            --ignore-vuln PYSEC-2026-311
+
       - name: Python syntax check
         working-directory: backend
         run: |
           python -m compileall app
+
+      - name: Backend tests
+        working-directory: backend
+        run: |
+          pytest -v
 
   frontend:
     name: Frontend CI
