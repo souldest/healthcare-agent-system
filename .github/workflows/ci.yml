@@ -44,6 +44,18 @@ jobs:
         run: |
           python -m compileall app
 
+      - name: Backend environment diagnostics
+        working-directory: backend
+        run: |
+          echo "=== Python ==="
+          python --version
+          echo "=== Pip ==="
+          python -m pip --version
+          echo "=== Pytest ==="
+          python -m pytest --version
+          echo "=== Relevant packages ==="
+          python -m pip show pytest fastapi starlette pydantic httpx
+
       - name: Backend tests
         working-directory: backend
         run: |
