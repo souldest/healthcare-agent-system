@@ -47,7 +47,12 @@ jobs:
       - name: Backend tests
         working-directory: backend
         run: |
-          pytest -v
+          python --version
+          python -m pip --version
+          python -m pytest --version
+          pwd
+          find . -maxdepth 2 -type f | sort
+          python -m pytest -v
 
   frontend:
     name: Frontend CI
