@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class DocumentCreate(BaseModel):
@@ -10,12 +10,11 @@ class DocumentCreate(BaseModel):
 
 
 class DocumentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     case_id: int
     filename: str
     document_type: str | None
     content: str | None
     embedding_id: str | None
-
-    class Config:
-        from_attributes = True
