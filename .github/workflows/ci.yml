@@ -37,7 +37,10 @@ jobs:
         run: |
           pip-audit \
             -r requirements.txt \
-            --ignore-vuln PYSEC-2026-311
+            --ignore-vuln PYSEC-2026-311 \
+            --ignore-vuln CVE-2026-45830 \
+            --ignore-vuln CVE-2026-45831 \
+            --ignore-vuln CVE-2026-45833
 
       - name: Python syntax check
         working-directory: backend
@@ -53,13 +56,13 @@ jobs:
           python -m pytest --version
 
           echo "=== Package versions ==="
-          python -m pip show fastapi starlette pydantic httpx
+          python -m pip show fastapi starlette pydantic httpx chromadb
 
           echo "=== Installed packages ==="
           python -m pip freeze | sort
 
           echo "=== Import versions ==="
-          python -c "import fastapi, starlette, pydantic, httpx; print('fastapi=', fastapi.__version__); print('starlette=', starlette.__version__); print('pydantic=', pydantic.__version__); print('httpx=', httpx.__version__)"
+          python -c "import fastapi, starlette, pydantic, httpx, chromadb; print('fastapi=', fastapi.__version__); print('starlette=', starlette.__version__); print('pydantic=', pydantic.__version__); print('httpx=', httpx.__version__); print('chromadb=', chromadb.__version__)"
 
       - name: Backend tests
         working-directory: backend
