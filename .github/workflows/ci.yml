@@ -117,6 +117,10 @@ jobs:
           CHROMA_PORT: "8004"
           OLLAMA_EMBED_URL: http://localhost:11434/api/embed
           EMBEDDING_MODEL: nomic-embed-text:latest
+          DATABRICKS_HOST: ""
+          DATABRICKS_WAREHOUSE_ID: ""
+          DATABRICKS_TOKEN: ""
+          CI: "true"
         run: |
           PYTHONPATH="$GITHUB_WORKSPACE" \
           uvicorn backend.app.main:app \
@@ -142,6 +146,8 @@ jobs:
           pytest -q backend/tests/test_rag.py
 
       - name: Run analytics integration tests
+        env:
+          CI: "true"
         run: |
           pytest -q backend/tests/test_analytics_integration.py
 
