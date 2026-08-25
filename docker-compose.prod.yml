@@ -1,0 +1,46 @@
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: healthcare-postgres
+    environment:
+      POSTGRES_USER: healthcare
+      POSTGRES_PASSWORD: healthcare
+      POSTGRES_DB: healthcare_ai
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  chromadb:
+    image: chromadb/chroma
+    container_name: healthcare-chroma
+    ports:
+      - "8004:8000"
+
+  backend:
+    image: ghcr.io/souldest/healthcare-agent-system/backend:${APP_VERSION:-latest}
+    container_name: healthcare-backend
+    ports:
+      - "8002:8000"
+    environment:
+      CHROMA_HOST: healthcare-chroma
+      CHROMA_PORT: "8000"
+      DATABASE_URL: postgresql://healthcare:healthcare@postgres:5432/healthcare_ai
+      DATABRICKS_HOST: ${DATABRICKS_HOST}
+      DATABRICKS_WAREHOUSE_ID: ${DATABRICKS_WAREHOUSE_ID}
+      DATABRICKS_TOKEN: ${DATABRICKS_TOKEN}
+    depends_on:
+      - postgres
+      - chromadb
+
+  frontend:
+    image: ghcr.io/souldest/healthcare-agent-system/frontend:${APP_VERSION:-latest}
+    container_name: healthcare-frontend
+    ports:
+      - "5174:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
