@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 from app.database.base import get_db
 from app.models.patient import Patient
 from app.models.case import Case
-from app.llm.provider import LLMProvider
+from app.rag.embeddings import create_embedding
+from app.rag.vector_store import search_documents
 
 
 router = APIRouter(
@@ -145,6 +146,71 @@ def member_chat(
             "status": "ESCALATION_REQUIRED",
         }
 
+    # ---------------------------------------------------------
+    # RAG: relevante Informationen aus ChromaDB holen
+    # ---------------------------------------------------------
+
+    try:
+        embedding = create_embedding(question)
+
+        rag_result = search_documents(
+            query_embedding=embedding,
+            n_results=3,
+        )
+
+        documents = rag_result.get("documents", [[]])[0]
+        metadatas = rag_result.get("metadatas", [[]])[0]
+        distances = rag_result.get("distances", [[]])[0]
+
+    except Exception:
+        documents = []
+        metadatas = []
+        distances = []
+
+    # ---------------------------------------------------------
+    # Kontext für das LLM aufbauen
+    # ---------------------------------------------------------
+
+    context_parts = []
+
+    for index, content in enumerate(documents):
+        metadata = (
+            metadatas[index]
+            if index < len(metadatas)
+            else {}
+        )
+
+        distance = (
+            distances[index]
+            if index < len(distances)
+            else None
+        )
+
+        context_parts.append(
+            f"""
+Dokument:
+{content}
+
+Metadaten:
+{metadata}
+
+Distanz:
+{distance}
+"""
+        )
+
+    context = "\n".join(context_parts)
+
+    if not context.strip():
+        context = (
+            "Es wurden keine passenden internen Dokumente "
+            "gefunden."
+        )
+
+    # ---------------------------------------------------------
+    # LLM Prompt
+    # ---------------------------------------------------------
+
     prompt = f"""
 Du bist der digitale Assistent einer gesetzlichen Krankenkasse.
 
@@ -160,20 +226,28 @@ WICHTIGE REGELN:
 1. Du stellst keine medizinischen Diagnosen.
 2. Du triffst keine verbindlichen Leistungs- oder
    Kostenentscheidungen.
-3. Erfinde keine Fristen, Beträge, Leistungen,
-   Erstattungszusagen oder Verfahrensregeln.
-4. Wenn dir eine Information nicht zuverlässig vorliegt,
-   sage das offen.
-5. Bei individuellen oder unklaren Fällen verweise
-   auf einen BKK-Mitarbeiter.
-6. Antworte auf Deutsch.
-7. Antworte verständlich und kurz.
+3. Verwende die bereitgestellten internen Dokumente
+   als Wissensquelle.
+4. Erfinde keine Fristen, Beträge, Leistungen,
+   Erstattungszusagen, E-Mail-Adressen,
+   Postadressen oder Verfahrensregeln.
+5. Wenn die internen Dokumente die Frage nicht beantworten,
+   sage klar, dass dir hierzu keine zuverlässige Information
+   vorliegt.
+6. Verwende keine Platzhalter wie [e-mail-Adresse].
+7. Bei individuellen oder unklaren Fällen verweise auf
+   einen BKK-Mitarbeiter.
+8. Antworte auf Deutsch.
+9. Antworte verständlich und kurz.
 
 Versicherter:
 {patient.first_name} {patient.last_name}
 
 Frage:
 {question}
+
+Interne Wissensbasis:
+{context}
 """
 
     provider = LLMProvider()

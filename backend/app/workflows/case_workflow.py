@@ -9,7 +9,10 @@ from app.tools.database_tool import (
     get_documents_for_case
 )
 
-from app.audit.service import record_event, get_latest_human_review
+from app.audit.service import (
+    record_event,
+    get_latest_human_review
+)
 
 
 class CaseWorkflow:
@@ -71,7 +74,10 @@ class CaseWorkflow:
             case_id=case_id,
             agent="Data Quality Agent",
             action="VALIDATE_CASE",
-            status=data_quality.get("quality_status", "UNKNOWN"),
+            status=data_quality.get(
+                "quality_status",
+                "UNKNOWN"
+            ),
             result=str(data_quality),
         )
 
@@ -96,9 +102,6 @@ class CaseWorkflow:
 
         # =========================================================
         # 5. Medical Agent
-        #
-        # Medical Agent verwendet:
-        # PostgreSQL + RAG + LLM
         # =========================================================
 
         medical_result = (
@@ -130,18 +133,64 @@ class CaseWorkflow:
             case_id=case_id,
             agent="Triage Agent",
             action="RISK_ASSESSMENT",
-            status=triage_result.get("priority", "UNKNOWN"),
+            status=triage_result.get(
+                "priority",
+                "UNKNOWN"
+            ),
             result=str(triage_result),
         )
 
         # =========================================================
-        # 7. Governance Agent
+        # 7. Bereits vorhandene Human Review prüfen
         #
-        # Entscheidet nicht medizinisch.
-        #
-        # Er entscheidet ausschließlich:
-        # Darf der Workflow kontrolliert weiterlaufen
-        # oder ist Human Review erforderlich?
+        # Eine APPROVED Review darf bei einem erneuten Workflow-Lauf
+        # nicht erneut durch den Governance Agent geöffnet werden.
+        # =========================================================
+
+        latest_review = get_latest_human_review(
+            case_id
+        )
+
+        if (
+            latest_review
+            and latest_review.get("status") == "APPROVED"
+        ):
+
+            governance_result = {
+                "agent": "governance_agent",
+                "case_id": case_id,
+                "decision": "APPROVED",
+                "gate": "PASSED",
+                "human_review_required": False,
+                "human_review_status": "COMPLETED",
+                "human_review_decision": "APPROVED",
+                "human_review": latest_review,
+            }
+
+            record_event(
+                case_id=case_id,
+                agent="Governance Agent",
+                action="HUMAN_REVIEW_GATE",
+                status="APPROVED",
+                result="Human review approved. Workflow may continue.",
+            )
+
+            return self._final_result(
+                data_quality=data_quality,
+                process_analysis=process_analysis,
+                medical_result=medical_result,
+                triage_result=triage_result,
+                governance_result=governance_result,
+                human_review=latest_review,
+                status="completed",
+                recommendation=(
+                    "Fachliche Prüfung abgeschlossen. "
+                    "Workflow kann kontrolliert fortgesetzt werden."
+                )
+            )
+
+        # =========================================================
+        # 8. Governance Agent
         # =========================================================
 
         governance_result = (
@@ -158,78 +207,121 @@ class CaseWorkflow:
             case_id=case_id,
             agent="Governance Agent",
             action="GOVERNANCE_DECISION",
-            status=governance_result.get("decision", "UNKNOWN"),
+            status=governance_result.get(
+                "decision",
+                "UNKNOWN"
+            ),
             result=str(governance_result),
         )
 
         # =========================================================
-        # 8. Human Review Gate
+        # 9. Human Review State
         # =========================================================
 
-        latest_review = get_latest_human_review(case_id)
-
-        if governance_result.get("decision") == "HUMAN_REVIEW":
+        if (
+            governance_result.get("decision")
+            == "HUMAN_REVIEW"
+        ):
 
             # -----------------------------------------------------
-            # Human reviewer has approved the case.
-            # The governance gate may now be passed.
+            # REQUEST_CHANGES
             # -----------------------------------------------------
 
-            if latest_review and latest_review.get("status") == "APPROVED":
-
-                record_event(
-                    case_id=case_id,
-                    agent="Governance Agent",
-                    action="HUMAN_REVIEW_GATE",
-                    status="APPROVED",
-                    result=(
-                        "Human review approved. "
-                        "Workflow may continue."
-                    ),
-                )
+            if (
+                latest_review
+                and latest_review.get("status")
+                == "REQUEST_CHANGES"
+            ):
 
                 governance_result = {
                     **governance_result,
-                    "decision": "APPROVED",
-                    "gate": "PASSED",
-                    "human_review_required": False,
+                    "decision": "REQUEST_CHANGES",
+                    "gate": "CHANGES_REQUIRED",
+                    "human_review_required": True,
+                    "human_review_status": "CHANGES_REQUIRED",
+                    "human_review_decision": "REQUEST_CHANGES",
                     "human_review": latest_review,
                 }
 
-            # -----------------------------------------------------
-            # No approval or an explicit rejection/change request.
-            # Keep the workflow paused.
-            # -----------------------------------------------------
-
-            else:
-
-                record_event(
-                    case_id=case_id,
-                    agent="Governance Agent",
-                    action="HUMAN_REVIEW_GATE",
-                    status="WAITING_FOR_HUMAN",
-                    result="Workflow paused pending human review.",
+                return self._final_result(
+                    data_quality=data_quality,
+                    process_analysis=process_analysis,
+                    medical_result=medical_result,
+                    triage_result=triage_result,
+                    governance_result=governance_result,
+                    human_review=latest_review,
+                    status="changes_required",
+                    recommendation=(
+                        "Änderungen bzw. weitere fachliche Prüfung "
+                        "erforderlich. Workflow bleibt pausiert."
+                    )
                 )
 
-                return {
-                    "workflow": self.name,
-                    "case_id": case_id,
-                    "data_quality": data_quality,
-                    "process_analysis": process_analysis,
-                    "medical_analysis": medical_result,
-                    "triage": triage_result,
-                    "governance": governance_result,
-                    "recommendation": (
-                        "Workflow paused. Human review required "
-                        "before further processing."
-                    ),
-                    "human_review_required": True,
-                    "status": "waiting_for_human_review",
+            # -----------------------------------------------------
+            # REJECTED
+            # -----------------------------------------------------
+
+            if (
+                latest_review
+                and latest_review.get("status")
+                == "REJECTED"
+            ):
+
+                governance_result = {
+                    **governance_result,
+                    "decision": "REJECTED",
+                    "gate": "CLOSED",
+                    "human_review_required": False,
+                    "human_review_status": "COMPLETED",
+                    "human_review_decision": "REJECTED",
                     "human_review": latest_review,
                 }
 
+                return self._final_result(
+                    data_quality=data_quality,
+                    process_analysis=process_analysis,
+                    medical_result=medical_result,
+                    triage_result=triage_result,
+                    governance_result=governance_result,
+                    human_review=latest_review,
+                    status="rejected",
+                    recommendation=(
+                        "Fall wurde durch die fachliche Prüfung "
+                        "abgelehnt. Workflow wurde beendet."
+                    )
+                )
+
+            # -----------------------------------------------------
+            # Noch keine Review
+            # -----------------------------------------------------
+
+            record_event(
+                case_id=case_id,
+                agent="Governance Agent",
+                action="HUMAN_REVIEW_GATE",
+                status="WAITING_FOR_HUMAN",
+                result=(
+                    "Workflow paused pending human review."
+                ),
+            )
+
+            return self._final_result(
+                data_quality=data_quality,
+                process_analysis=process_analysis,
+                medical_result=medical_result,
+                triage_result=triage_result,
+                governance_result=governance_result,
+                human_review=None,
+                status="waiting_for_human_review",
+                recommendation=(
+                    "Human review required. "
+                    "Workflow pausiert. "
+                    "Fachliche Prüfung durch Mitarbeitende erforderlich."
+                )
+            )
+
         # =========================================================
-        # 9. Workflow Recommendation
+        # 10. Kein Human Review erforderlich
         # =========================================================
 
         recommendation = (
@@ -241,35 +333,44 @@ class CaseWorkflow:
             )
         )
 
-        # =========================================================
-        # 9. Finales Ergebnis
-        # =========================================================
+        return self._final_result(
+            data_quality=data_quality,
+            process_analysis=process_analysis,
+            medical_result=medical_result,
+            triage_result=triage_result,
+            governance_result=governance_result,
+            human_review=latest_review,
+            status="completed",
+            recommendation=recommendation
+        )
+
+    def _final_result(
+        self,
+        data_quality,
+        process_analysis,
+        medical_result,
+        triage_result,
+        governance_result,
+        human_review,
+        status,
+        recommendation
+    ):
 
         return {
-
             "workflow": self.name,
-
-            "case_id": case_id,
-
+            "case_id": governance_result.get("case_id"),
             "data_quality": data_quality,
-
             "process_analysis": process_analysis,
-
             "medical_analysis": medical_result,
-
             "triage": triage_result,
-
             "governance": governance_result,
-
             "recommendation": recommendation,
-
-            "human_review_required": (
-                governance_result[
-                    "human_review_required"
-                ]
+            "human_review_required": governance_result.get(
+                "human_review_required",
+                False
             ),
-
-            "status": "completed"
+            "status": status,
+            "human_review": human_review,
         }
 
     def create_recommendation(
@@ -280,43 +381,30 @@ class CaseWorkflow:
         governance_result
     ):
 
-        if governance_result.get(
-            "decision"
-        ) == "APPROVED":
+        decision = governance_result.get("decision")
 
+        if decision == "APPROVED":
             return (
                 "Fachliche Prüfung abgeschlossen. "
                 "Workflow kann kontrolliert fortgesetzt werden."
             )
 
-        if governance_result.get(
-            "decision"
-        ) == "HUMAN_REVIEW":
-
+        if decision == "REJECTED":
             return (
-                "Fachliche Prüfung durch Mitarbeitende vor der "
-                "weiteren Bearbeitung erforderlich."
+                "Fall wurde durch die fachliche Prüfung "
+                "abgelehnt."
             )
 
-        if data_quality.get(
-            "quality_status"
-        ) == "REVIEW_REQUIRED":
-
+        if decision == "REQUEST_CHANGES":
             return (
-                "Manual review required "
-                "because case data is incomplete."
+                "Änderungen bzw. weitere fachliche Prüfung "
+                "erforderlich."
             )
 
-        if triage_result.get(
-            "priority"
-        ) == "HIGH":
-
+        if decision == "HUMAN_REVIEW":
             return (
-                "Urgent human review recommended."
+                "Human review required. "
+                "Workflow pausiert. Fachliche Prüfung durch Mitarbeitende erforderlich."
             )
 
-        return (
-            "Controlled workflow continuation. "
-            "Next process step: "
-            + process_analysis["next_step"]
-        )
+        return "Workflow erfolgreich abgeschlossen."

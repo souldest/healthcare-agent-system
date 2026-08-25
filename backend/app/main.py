@@ -1,60 +1,45 @@
 from fastapi import FastAPI
 
-from app.api import agents
-from app.api import patients
-from app.api import cases
-from app.api import documents
-from app.api import rag
-from app.api import insurer
-from app.api import member
+from app.api.patients import router as patients_router
+from app.api.cases import router as cases_router
+from app.api.documents import router as documents_router
+from app.api.rag import router as rag_router
+from app.api.agents import router as agents_router
+from app.api.insurer import router as insurer_router
+from app.api.member import router as member_router
+from app.api.analytics import router as analytics_router
 
 
 app = FastAPI(
     title="Healthcare Agent System",
     description="Multi-Agent AI Platform",
-    version="0.1.0"
+    version="0.1.0",
 )
 
 
-app.include_router(
-    patients.router
-)
+app.include_router(patients_router, prefix="/api")
+app.include_router(cases_router, prefix="/api")
+app.include_router(documents_router, prefix="/api")
+app.include_router(rag_router, prefix="/api")
+app.include_router(agents_router, prefix="/api")
+app.include_router(insurer_router, prefix="/api")
+app.include_router(member_router, prefix="/api")
+app.include_router(analytics_router, prefix="/api")
 
-app.include_router(
-    cases.router
-)
-
-app.include_router(
-    documents.router
-)
-
-app.include_router(
-    rag.router
-)
-
-app.include_router(
-    agents.router
-)
-
-app.include_router(
-    insurer.router
-)
-
-app.include_router(
-    member.router
-)
 
 @app.get("/")
 def root():
     return {
         "application": "Healthcare Agent System",
-        "status": "running"
+        "status": "running",
     }
 
 
 @app.get("/health")
 def health():
     return {
+        "status": "ok",
         "database": "ready",
-        "agents": "ready"
+        "agents": "ready",
+        "databricks": "ready",
     }

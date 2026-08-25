@@ -1745,3 +1745,1610 @@ button {
   color: #16324f;
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.12);
 }
+
+/* ============================================================
+   AGENT PIPELINE
+============================================================ */
+
+.agent-pipeline-panel {
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 14px;
+  background: var(--panel-background, #ffffff);
+}
+
+.agent-pipeline-panel h3 {
+  margin: 6px 0 18px;
+}
+
+.agent-pipeline-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.agent-card {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.agent-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.agent-card strong {
+  display: block;
+  line-height: 1.3;
+}
+
+.agent-card span:not(.agent-number) {
+  display: block;
+  line-height: 1.45;
+  color: #667085;
+}
+
+.agent-card b {
+  white-space: nowrap;
+  font-size: 11px;
+  letter-spacing: .06em;
+}
+
+.agent-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #eef2ff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.human-agent {
+  border-style: dashed;
+}
+
+
+/* ============================================================
+   AUDIT / GOVERNANCE SPACING
+============================================================ */
+
+.audit-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.audit-detail-row {
+  display: grid;
+  grid-template-columns: minmax(120px, 180px) minmax(0, 1fr);
+  align-items: start;
+  column-gap: 20px;
+  row-gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eef0f3;
+}
+
+.audit-detail-label {
+  display: block;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.audit-detail-value {
+  display: block;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.audit-review-summary {
+  padding: 16px 0;
+}
+
+.audit-review-label {
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.audit-group {
+  margin-top: 20px;
+}
+
+.audit-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.audit-group-title {
+  line-height: 1.4;
+}
+
+.audit-group-count {
+  white-space: nowrap;
+}
+
+
+/* ============================================================
+   GOVERNANCE PANEL
+============================================================ */
+
+.governance-panel {
+  margin-top: 24px;
+}
+
+.governance-panel .audit-details,
+.governance-panel .governance-details {
+  gap: 0;
+}
+
+.governance-panel .audit-detail-row,
+.governance-panel .governance-detail-row {
+  margin-bottom: 0;
+  padding: 10px 0;
+}
+
+.governance-panel strong,
+.governance-panel span {
+  line-height: 1.45;
+}
+
+
+/* Prevent labels and values from touching each other */
+.audit-detail-label + .audit-detail-value {
+  margin-left: 0;
+}
+
+
+/* Mobile */
+@media (max-width: 900px) {
+
+  .agent-pipeline-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-detail-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .audit-detail-label {
+    white-space: normal;
+  }
+}
+
+/* =========================================================
+   AUDIT DETAIL SPACING
+========================================================= */
+
+.audit-details {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.audit-detail-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  column-gap: 24px;
+  align-items: start;
+}
+
+.audit-detail-label {
+  font-weight: 700;
+  color: #73808a;
+  white-space: nowrap;
+}
+
+.audit-detail-value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+}
+
+/* =========================================================
+   AGENT PIPELINE DESCRIPTIONS
+========================================================= */
+
+.pipeline-step {
+  position: relative;
+  min-width: 150px;
+}
+
+.pipeline-description {
+  margin-top: 6px;
+  max-width: 180px;
+  font-size: 10px;
+  line-height: 1.45;
+  color: #73808a;
+}
+
+
+/* =========================================================
+   BKK AI OPERATIONS — VISUAL DESIGN LAYER
+   Healthcare / AI / Enterprise
+========================================================= */
+
+:root {
+  --bkk-navy: #12304a;
+  --bkk-blue: #1769aa;
+  --bkk-cyan: #0891b2;
+  --bkk-teal: #0f9f91;
+  --bkk-green: #16845b;
+  --bkk-green-soft: #e9f8f2;
+  --bkk-blue-soft: #eaf4ff;
+  --bkk-cyan-soft: #e8f8fb;
+  --bkk-orange: #c77718;
+  --bkk-orange-soft: #fff4e5;
+  --bkk-red: #c43d45;
+  --bkk-red-soft: #fff0f1;
+
+  --surface: #ffffff;
+  --surface-soft: #f7fafc;
+  --surface-blue: #f3f8fc;
+
+  --border-color: #dce7ef;
+  --text-main: #142536;
+  --text-secondary: #5e7180;
+  --text-muted: #8a9aa7;
+
+  --shadow-sm: 0 2px 8px rgba(18, 48, 74, 0.05);
+  --shadow-md: 0 8px 24px rgba(18, 48, 74, 0.08);
+  --shadow-lg: 0 14px 40px rgba(18, 48, 74, 0.10);
+}
+
+
+/* =========================================================
+   GLOBAL BACKGROUND
+========================================================= */
+
+body {
+  background:
+    radial-gradient(
+      circle at 85% 5%,
+      rgba(8, 145, 178, 0.10),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 5% 40%,
+      rgba(23, 105, 170, 0.055),
+      transparent 30%
+    ),
+    #f4f8fb;
+}
+
+.app-shell {
+  background:
+    radial-gradient(
+      circle at 90% 0%,
+      rgba(8, 145, 178, 0.10),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 0% 65%,
+      rgba(23, 105, 170, 0.055),
+      transparent 28%
+    ),
+    linear-gradient(180deg, #f7fafc 0%, #f2f7fa 100%);
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topbar {
+  background:
+    linear-gradient(
+      90deg,
+      #ffffff 0%,
+      #fafdff 65%,
+      #f4fbfc 100%
+    );
+
+  border-bottom: 1px solid #d8e5ed;
+
+  box-shadow:
+    0 2px 12px rgba(18, 48, 74, 0.045);
+}
+
+.brand-mark {
+  background:
+    linear-gradient(
+      135deg,
+      #12304a,
+      #1769aa 55%,
+      #0891b2
+    );
+
+  border-radius: 11px;
+
+  box-shadow:
+    0 5px 14px rgba(23, 105, 170, 0.22);
+}
+
+.brand-title {
+  color: #12304a;
+}
+
+.brand-subtitle {
+  color: #718695;
+}
+
+.environment {
+  color: #8295a3;
+}
+
+.system-online {
+  color: #3f6470;
+}
+
+.online-dot {
+  background: #12a66e;
+
+  box-shadow:
+    0 0 0 4px rgba(18, 166, 110, 0.11),
+    0 0 12px rgba(18, 166, 110, 0.20);
+}
+
+
+/* =========================================================
+   DASHBOARD HEADER
+========================================================= */
+
+.page-heading h1 {
+  color: #12304a;
+
+  background:
+    linear-gradient(
+      90deg,
+      #12304a,
+      #1769aa 55%,
+      #087f91
+    );
+
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.page-heading p {
+  color: #637987;
+}
+
+.eyebrow,
+.panel-kicker,
+.recommendation-kicker {
+  color: #167c96;
+}
+
+.workflow-badge {
+  border-color: #cfe2ec;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #f1fafc
+    );
+
+  color: #3e6574;
+
+  box-shadow: var(--shadow-sm);
+}
+
+.workflow-dot {
+  background: #0fa582;
+
+  box-shadow:
+    0 0 0 4px rgba(15, 165, 130, 0.10);
+}
+
+
+/* =========================================================
+   KPI CARDS
+========================================================= */
+
+.kpi-card {
+  position: relative;
+  overflow: hidden;
+
+  border-color: #dce7ef;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff 0%,
+      #ffffff 70%,
+      #f5fafc 100%
+    );
+
+  box-shadow: var(--shadow-sm);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.kpi-card::after {
+  content: "";
+
+  position: absolute;
+
+  width: 90px;
+  height: 90px;
+
+  right: -32px;
+  top: -38px;
+
+  border-radius: 50%;
+
+  background: rgba(8, 145, 178, 0.055);
+
+  pointer-events: none;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #c8dce8;
+
+  box-shadow: var(--shadow-md);
+}
+
+.kpi-label {
+  color: #6f8391;
+}
+
+.kpi-icon {
+  background: #edf4f8;
+  color: #35647a;
+}
+
+.kpi-icon.positive {
+  background: #e6f8f1;
+  color: #16845b;
+}
+
+.kpi-icon.warning {
+  background: #fff3e4;
+  color: #bd6d19;
+}
+
+.kpi-value {
+  color: #12304a;
+}
+
+.kpi-description {
+  color: #8295a2;
+}
+
+
+/* =========================================================
+   MAIN PANELS
+========================================================= */
+
+.cases-panel,
+.analysis-panel,
+.architecture-panel {
+  border-color: #d9e5ed;
+
+  background: rgba(255, 255, 255, 0.96);
+
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-header {
+  border-bottom-color: #e4edf2;
+
+  background:
+    linear-gradient(
+      180deg,
+      #ffffff,
+      #fbfdfe
+    );
+}
+
+.panel-header h2 {
+  color: #17344c;
+}
+
+.case-count {
+  background: #eaf3f8;
+  color: #4c7083;
+}
+
+
+/* =========================================================
+   CASE LIST
+========================================================= */
+
+.case-row {
+  transition:
+    background 0.18s ease,
+    border 0.18s ease,
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.case-row:hover {
+  background: #f1f8fb;
+  border-color: #d8e9f0;
+  transform: translateX(2px);
+}
+
+.case-row.selected {
+  border-color: #9bc9dc;
+
+  background:
+    linear-gradient(
+      135deg,
+      #edf8fb,
+      #f4f8ff
+    );
+
+  box-shadow:
+    inset 4px 0 0 #0891b2,
+    0 3px 10px rgba(8, 145, 178, 0.07);
+}
+
+.case-id {
+  color: #6c91a3;
+}
+
+.case-title {
+  color: #18364d;
+}
+
+.case-description {
+  color: #6f8290;
+}
+
+.case-footer {
+  border-top-color: #e4edf2;
+  color: #81939f;
+}
+
+
+/* =========================================================
+   PRIORITY
+========================================================= */
+
+.priority-badge.high {
+  background:
+    linear-gradient(
+      135deg,
+      #fff0ef,
+      #ffe8e7
+    );
+
+  color: #bd3e3b;
+
+  border: 1px solid #f5c9c7;
+}
+
+.priority-badge.high .priority-dot {
+  background: #dc443f;
+
+  box-shadow:
+    0 0 0 3px rgba(220, 68, 63, 0.10);
+}
+
+.priority-badge.medium {
+  background: #fff5e6;
+  color: #a7671e;
+  border: 1px solid #f1d8ad;
+}
+
+.priority-badge.low {
+  background: #eaf8f2;
+  color: #207b57;
+  border: 1px solid #c9eadc;
+}
+
+
+/* =========================================================
+   ANALYSIS HEADER
+========================================================= */
+
+.analysis-header {
+  border-bottom-color: #dfebf1;
+}
+
+.analysis-header h2 {
+  color: #12304a;
+}
+
+.analysis-patient {
+  color: #718694;
+}
+
+.risk-label {
+  color: #80939f;
+}
+
+.risk-value.high {
+  color: #c33e3b;
+
+  text-shadow:
+    0 1px 0 rgba(195, 62, 59, 0.08);
+}
+
+.risk-value.medium {
+  color: #b56d1c;
+}
+
+.risk-value.low {
+  color: #16845b;
+}
+
+
+/* =========================================================
+   HUMAN REVIEW
+========================================================= */
+
+.human-review {
+  border-color: #efd6b6;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fffaf3,
+      #fff6e9
+    );
+
+  box-shadow:
+    0 3px 12px rgba(193, 119, 24, 0.055);
+}
+
+.review-icon {
+  background:
+    linear-gradient(
+      135deg,
+      #f5dfc5,
+      #ffe9cc
+    );
+
+  color: #a96118;
+}
+
+.review-content strong {
+  color: #754816;
+}
+
+.review-content span {
+  color: #876a4b;
+}
+
+.review-status {
+  color: #a86924;
+}
+
+
+/* =========================================================
+   PIPELINE
+========================================================= */
+
+.agent-pipeline {
+  border-color: #d9e7ee;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f6fafc,
+      #eef8fa
+    );
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.pipeline-number {
+  color: #5e8aa0;
+}
+
+.pipeline-name {
+  color: #24465c;
+}
+
+.pipeline-status {
+  color: #168c67;
+}
+
+.pipeline-line {
+  color: #80a5b5;
+}
+
+
+/* =========================================================
+   AGENT PIPELINE PANEL
+========================================================= */
+
+.agent-pipeline-panel {
+  border-color: #d7e5ed;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f6fafc
+    );
+
+  box-shadow: var(--shadow-sm);
+}
+
+.agent-pipeline-panel h3 {
+  color: #17364d;
+}
+
+.agent-card {
+  border-color: #dbe7ee;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #f7fafc
+    );
+
+  box-shadow:
+    0 2px 6px rgba(18, 48, 74, 0.035);
+
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.agent-card:hover {
+  transform: translateY(-2px);
+
+  border-color: #bcd7e4;
+
+  box-shadow:
+    0 7px 18px rgba(18, 48, 74, 0.07);
+}
+
+.agent-card span:not(.agent-number) {
+  color: #6c808e;
+}
+
+.agent-card b {
+  color: #16845b;
+}
+
+.agent-number {
+  background:
+    linear-gradient(
+      135deg,
+      #e8f4ff,
+      #e8f9fa
+    );
+
+  color: #1769aa;
+
+  border: 1px solid #d4e7f0;
+}
+
+.human-agent {
+  border-color: #e4cda9;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fffdf8,
+      #fff8ed
+    );
+}
+
+
+/* =========================================================
+   INFO CARDS
+========================================================= */
+
+.info-card {
+  border-color: #dce7ed;
+
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f9fcfd
+    );
+
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.info-card:hover {
+  border-color: #c5dce7;
+
+  box-shadow:
+    0 5px 16px rgba(18, 48, 74, 0.055);
+}
+
+.info-card-label {
+  color: #78909e;
+}
+
+.info-card-value {
+  color: #21445a;
+}
+
+.success-mark {
+  color: #0d9a70;
+}
+
+.info-card-detail {
+  color: #82939f;
+}
+
+.process-name {
+  color: #24465b;
+}
+
+.process-route {
+  color: #708694;
+}
+
+.route-arrow {
+  color: #8eb1c0;
+}
+
+
+/* =========================================================
+   TRIAGE
+========================================================= */
+
+.triage-box {
+  border-color: #dbe7ed;
+
+  background: #ffffff;
+}
+
+.triage-reason {
+  border-right-color: #e1ebf0;
+  background: #f9fcfd;
+}
+
+.triage-action {
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #f6fbfd
+    );
+}
+
+.triage-box span {
+  color: #718996;
+}
+
+.triage-box p {
+  color: #5e707d;
+}
+
+.triage-action strong {
+  color: #24445a;
+}
+
+
+/* =========================================================
+   MEDICAL SUMMARY
+========================================================= */
+
+.summary-box {
+  border: 1px solid #d9e8ef;
+
+  background:
+    linear-gradient(
+      135deg,
+      #eef8fb,
+      #f5f9fc
+    );
+
+  color: #4d6877;
+
+  box-shadow:
+    inset 3px 0 0 #0891b2;
+}
+
+.finding {
+  border-bottom-color: #e4edf2;
+}
+
+.finding > span {
+  color: #2186a0;
+}
+
+.finding p {
+  color: #526875;
+}
+
+
+/* =========================================================
+   RAG
+========================================================= */
+
+.rag-card {
+  border-color: #d8e6ed;
+
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #f5fafc
+    );
+
+  box-shadow:
+    0 2px 7px rgba(18, 48, 74, 0.035);
+
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.rag-card:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 6px 15px rgba(18, 48, 74, 0.065);
+}
+
+.rag-top {
+  color: #21819a;
+}
+
+.rag-card p {
+  color: #536b78;
+}
+
+.similarity {
+  color: #8096a2;
+}
+
+
+/* =========================================================
+   DOCUMENTS
+========================================================= */
+
+.document-count {
+  background: #eaf5f8;
+  color: #3d7082;
+}
+
+.document-row {
+  border-color: #dfe9ee;
+
+  background: #fbfdfe;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.document-row:hover {
+  background: #f2f9fb;
+  border-color: #cbdfe7;
+}
+
+.document-icon {
+  background: #e8f2f6;
+  color: #477286;
+}
+
+.document-row strong {
+  color: #3f5d6d;
+}
+
+.document-row div span {
+  color: #8c9da6;
+}
+
+.document-status {
+  color: #168a66;
+}
+
+
+/* =========================================================
+   RECOMMENDATION
+========================================================= */
+
+.recommendation-box {
+  border-color: #c9dfe9;
+
+  background:
+    linear-gradient(
+      135deg,
+      #edf8fb,
+      #f4f8fc
+    );
+
+  box-shadow:
+    0 5px 16px rgba(8, 145, 178, 0.055);
+
+  position: relative;
+  overflow: hidden;
+}
+
+.recommendation-box::before {
+  content: "";
+
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 4px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #0891b2,
+      #1769aa
+    );
+}
+
+.recommendation-box h3 {
+  color: #1e4258;
+}
+
+.recommendation-box p {
+  color: #657c89;
+}
+
+
+/* =========================================================
+   GOVERNANCE
+========================================================= */
+
+.governance-panel {
+  position: relative;
+}
+
+.governance-panel::before {
+  content: "";
+
+  display: block;
+
+  height: 3px;
+
+  margin-bottom: 14px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #16845b,
+      #0891b2,
+      #1769aa
+    );
+}
+
+.governance-panel .audit-detail-row {
+  border-bottom-color: #e4edf2;
+}
+
+.governance-panel strong {
+  color: #24455a;
+}
+
+.governance-panel span {
+  color: #647b89;
+}
+
+
+/* =========================================================
+   AUDIT TRAIL
+========================================================= */
+
+.execution-history {
+  padding: 4px 0;
+}
+
+.history-event {
+  color: #1769aa;
+}
+
+.history-dot {
+  box-shadow:
+    0 0 0 4px rgba(23, 105, 170, 0.08),
+    0 2px 6px rgba(23, 105, 170, 0.16);
+}
+
+.history-line {
+  background: currentColor;
+  opacity: 0.16;
+}
+
+.history-top strong {
+  color: #24465b;
+}
+
+.history-status {
+  background: rgba(23, 105, 170, 0.035);
+}
+
+.history-action {
+  color: #39728b;
+}
+
+.history-result {
+  color: #5e7180;
+}
+
+.history-timestamp {
+  color: #7f929e;
+}
+
+.audit-detail-row {
+  border-bottom: 1px solid #e5edf2;
+}
+
+.audit-detail-label {
+  color: #68808e;
+}
+
+.audit-detail-value {
+  color: #405d6d;
+}
+
+
+/* =========================================================
+   VIEW SWITCHER
+========================================================= */
+
+.view-switcher {
+  border-color: #d3e2ea;
+
+  background:
+    linear-gradient(
+      135deg,
+      #edf5f8,
+      #f5f8fb
+    );
+
+  box-shadow:
+    0 2px 8px rgba(18, 48, 74, 0.035);
+}
+
+.view-switcher-button {
+  color: #587080;
+}
+
+.view-switcher-button:hover {
+  background: #e1f0f5;
+  color: #24556d;
+}
+
+.view-switcher-button.active {
+  background:
+    linear-gradient(
+      135deg,
+      #ffffff,
+      #eef8fa
+    );
+
+  color: #123e58;
+
+  box-shadow:
+    0 2px 7px rgba(18, 48, 74, 0.10);
+
+  border: 1px solid #cce1e9;
+}
+
+
+/* =========================================================
+   HUMAN REVIEW BUTTONS
+========================================================= */
+
+.review-button {
+  box-shadow:
+    0 1px 3px rgba(18, 48, 74, 0.04);
+
+  transition:
+    background 0.16s ease,
+    color 0.16s ease,
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.review-button.approve {
+  color: #087a56;
+  border-color: #79c6a7;
+  background: #f1fbf7;
+}
+
+.review-button.approve:hover:not(:disabled) {
+  background: #dcf6eb;
+  box-shadow: 0 5px 12px rgba(22, 132, 91, 0.10);
+}
+
+.review-button.changes {
+  color: #9a681f;
+  border-color: #e0bd83;
+  background: #fffaf1;
+}
+
+.review-button.changes:hover:not(:disabled) {
+  background: #fff1d8;
+  box-shadow: 0 5px 12px rgba(154, 104, 31, 0.09);
+}
+
+.review-button.reject {
+  color: #a43f45;
+  border-color: #e2a7ab;
+  background: #fff7f7;
+}
+
+.review-button.reject:hover:not(:disabled) {
+  background: #ffe8e9;
+  box-shadow: 0 5px 12px rgba(164, 63, 69, 0.09);
+}
+
+.review-success {
+  border-color: #a9dec8;
+
+  background:
+    linear-gradient(
+      135deg,
+      #effbf6,
+      #e7f8f1
+    );
+
+  color: #147a57;
+
+  box-shadow:
+    0 4px 12px rgba(22, 132, 91, 0.06);
+}
+
+
+/* =========================================================
+   ARCHITECTURE
+========================================================= */
+
+.architecture-panel {
+  background:
+    linear-gradient(
+      145deg,
+      #ffffff,
+      #f5fafc
+    );
+}
+
+.architecture-panel h2 {
+  color: #18394f;
+}
+
+.architecture-step strong {
+  color: #345568;
+}
+
+.architecture-step span {
+  color: #8296a2;
+}
+
+.architecture-step.final {
+  border-color: #e3cda9;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fffdf8,
+      #fff6e8
+    );
+
+  box-shadow:
+    0 4px 12px rgba(193, 119, 24, 0.055);
+}
+
+.architecture-number {
+  color: #56829a;
+}
+
+.flow-arrow {
+  color: #82a6b5;
+}
+
+
+/* =========================================================
+   DISCLAIMER / FOOTER
+========================================================= */
+
+.disclaimer {
+  border-top-color: #dfe9ee;
+  color: #8a9ba5;
+}
+
+.disclaimer strong {
+  color: #657b88;
+}
+
+.dashboard-footer {
+  color: #81939e;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.error-banner {
+  border-color: #f0c9cc;
+
+  background:
+    linear-gradient(
+      135deg,
+      #fff7f7,
+      #fff0f1
+    );
+
+  color: #a33e45;
+
+  box-shadow:
+    0 4px 12px rgba(196, 61, 69, 0.055);
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.loading-screen {
+  background:
+    radial-gradient(
+      circle at center,
+      #ffffff 0%,
+      #f1f8fb 100%
+    );
+}
+
+.loading-spinner {
+  border-color: #d9e8ef;
+  border-top-color: #0891b2;
+}
+
+.loading-card h2 {
+  color: #18394f;
+}
+
+.loading-card p {
+  color: #758b98;
+}
+
+
+/* =========================================================
+   SUBTLE GLOBAL INTERACTIONS
+========================================================= */
+
+button:focus-visible {
+  outline: 3px solid rgba(8, 145, 178, 0.22);
+  outline-offset: 2px;
+}
+
+.case-row:focus-visible,
+.view-switcher-button:focus-visible,
+.review-button:focus-visible {
+  outline: 3px solid rgba(23, 105, 170, 0.20);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   MOBILE POLISH
+========================================================= */
+
+@media (max-width: 800px) {
+
+  .topbar {
+    background: #ffffff;
+  }
+
+  .kpi-card:hover,
+  .agent-card:hover,
+  .case-row:hover {
+    transform: none;
+  }
+
+  .analysis-content {
+    background: transparent;
+  }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+
+/* =============================================================
+   DATABRICKS ANALYTICS
+============================================================= */
+
+.analytics-section {
+  margin-bottom: 24px;
+}
+
+.analytics-panel {
+  width: 100%;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.analytics-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.analytics-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.analytics-status {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(100, 220, 160, 0.25);
+}
+
+.analytics-table {
+  width: 100%;
+}
+
+.analytics-row {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(4, 0.7fr);
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 13px;
+}
+
+.analytics-card:last-child .analytics-row {
+  grid-template-columns: 1.6fr repeat(3, 0.7fr);
+}
+
+.analytics-row:last-child {
+  border-bottom: none;
+}
+
+.analytics-row-header {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.55;
+}
+
+@media (max-width: 900px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ============================================================
+   DATABRICKS ANALYTICS
+============================================================ */
+
+.analytics-panel {
+  margin: 24px 0;
+  padding: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.025);
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 18px;
+}
+
+.analytics-card {
+  padding: 18px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.035);
+}
+
+.analytics-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.analytics-card-header strong {
+  font-size: 15px;
+}
+
+.analytics-card-header span {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.analytics-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.analytics-metrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.analytics-metrics span {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.analytics-metrics strong {
+  font-size: 20px;
+}
+
+.sick-pay-card {
+  border-color: rgba(255,255,255,0.16);
+}
+
+.sick-pay-card .analytics-metrics {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+
+@media (max-width: 1100px) {
+  .analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+@media (max-width: 700px) {
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+}

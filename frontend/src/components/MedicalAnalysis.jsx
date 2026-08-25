@@ -4,6 +4,16 @@ export default function MedicalAnalysis({
   ragFindings,
   documents
 }) {
+  const displayFindings = (findings || []).map((finding) => {
+    const text = String(finding);
+
+    if (text === "Brustschmerze") {
+      return "Brustschmerzen";
+    }
+
+    return text;
+  });
+
   return (
     <>
       {/* MEDICAL ANALYSIS */}
@@ -39,11 +49,11 @@ export default function MedicalAnalysis({
         </div>
 
 
-        {findings.length > 0 && (
+        {displayFindings.length > 0 && (
 
           <div className="findings">
 
-            {findings.map(
+            {displayFindings.map(
               (finding, index) => (
 
                 <div

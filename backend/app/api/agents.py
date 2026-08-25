@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -25,16 +25,36 @@ router = APIRouter(
 @router.get("/analyze/{case_id}")
 def analyze_case(
     case_id: int,
+    refresh: bool = Query(False),
     db: Session = Depends(get_db),
 ):
     try:
         history = get_case_history(case_id)
 
-        # ---------------------------------------------------------
-        # Bereits analysierter Case:
-        # KEINE erneute Agent-Pipeline starten.
-        # Ergebnis wird aus dem Audit-Trail rekonstruiert.
-        # ---------------------------------------------------------
+        # =========================================================
+        # Bereits vorhandene Human Review prüfen.
+        #
+        # Nach einer Human Review darf /analyze/{case_id}
+        # NICHT erneut die Agent-Pipeline starten.
+        # =========================================================
+
+        latest_review = None
+
+        for event in reversed(history):
+            if event.get("action") == "HUMAN_REVIEW_DECISION":
+                latest_review = event
+                break
+
+        if latest_review is not None and not refresh:
+            return _build_result_from_history(
+                case_id,
+                history,
+                latest_review,
+            )
+
+        # =========================================================
+        # Prüfen, ob die normale Pipeline bereits vollständig ist.
+        # =========================================================
 
         required_actions = {
             "VALIDATE_CASE",
@@ -53,25 +73,16 @@ def analyze_case(
             existing_actions
         )
 
-        if pipeline_completed:
-
-            latest_review = None
-
-            for event in reversed(history):
-                if event.get("action") == "HUMAN_REVIEW_DECISION":
-                    latest_review = event
-                    break
-
+        if pipeline_completed and not refresh:
             return _build_result_from_history(
                 case_id,
                 history,
-                latest_review,
+                None,
             )
 
-        # ---------------------------------------------------------
-        # Noch keine vollständige Pipeline:
-        # Workflow einmalig ausführen.
-        # ---------------------------------------------------------
+        # =========================================================
+        # Nur wirklich neue Cases starten die Workflow-Pipeline.
+        # =========================================================
 
         workflow = CaseWorkflow()
 
@@ -96,7 +107,6 @@ def analyze_case(
             status_code=500,
             detail=str(e),
         )
-
 
 def _parse_result(event):
     result = event.get("result")
@@ -129,9 +139,9 @@ def _build_result_from_history(
     triage = {}
     governance = {}
 
-    # ---------------------------------------------------------
-    # Letzten bekannten Stand jedes Agenten übernehmen.
-    # ---------------------------------------------------------
+    # =========================================================
+    # Letzten bekannten Agentenstand übernehmen
+    # =========================================================
 
     for event in history:
 
@@ -152,91 +162,244 @@ def _build_result_from_history(
         elif action == "GOVERNANCE_DECISION":
             governance = _parse_result(event)
 
-    # ---------------------------------------------------------
-    # Human Review wurde genehmigt.
-    # ---------------------------------------------------------
+    # =========================================================
+    # Human Review
+    # =========================================================
 
     if latest_review:
-        decision = latest_review.get("status")
+
+        decision = (
+            str(
+                latest_review.get("status", "")
+            )
+            .upper()
+            .strip()
+        )
+
+        # -----------------------------------------------------
+        # APPROVED
+        # -----------------------------------------------------
 
         if decision == "APPROVED":
 
             governance = {
                 **governance,
+
                 "decision": "APPROVED",
+
                 "gate": "PASSED",
+
                 "human_review_required": False,
+
+                "human_review_status": "COMPLETED",
+
+                "human_review_decision": "APPROVED",
+
                 "human_review": latest_review,
             }
 
             return {
                 "workflow": "bkk_case_workflow",
+
                 "case_id": case_id,
+
                 "data_quality": data_quality,
+
                 "process_analysis": process_analysis,
+
                 "medical_analysis": medical_analysis,
+
                 "triage": triage,
+
                 "governance": governance,
+
                 "recommendation": (
                     "Fachliche Prüfung abgeschlossen. "
                     "Workflow kann kontrolliert fortgesetzt werden."
                 ),
+
                 "human_review_required": False,
+
                 "status": "completed",
+
                 "human_review": latest_review,
             }
+
+        # -----------------------------------------------------
+        # REQUEST_CHANGES
+        # -----------------------------------------------------
+
+        if decision == "REQUEST_CHANGES":
+
+            governance = {
+                **governance,
+
+                "decision": "REQUEST_CHANGES",
+
+                "gate": "CHANGES_REQUIRED",
+
+                "human_review_required": True,
+
+                "human_review_status": "CHANGES_REQUIRED",
+
+                "human_review_decision": "REQUEST_CHANGES",
+
+                "human_review": latest_review,
+            }
+
+            return {
+                "workflow": "bkk_case_workflow",
+
+                "case_id": case_id,
+
+                "data_quality": data_quality,
+
+                "process_analysis": process_analysis,
+
+                "medical_analysis": medical_analysis,
+
+                "triage": triage,
+
+                "governance": governance,
+
+                "recommendation": (
+                    "Änderungen bzw. weitere fachliche Prüfung "
+                    "erforderlich. Workflow bleibt pausiert."
+                ),
+
+                "human_review_required": True,
+
+                "status": "changes_required",
+
+                "human_review": latest_review,
+            }
+
+        # -----------------------------------------------------
+        # REJECTED
+        # -----------------------------------------------------
+
+        if decision == "REJECTED":
+
+            governance = {
+                **governance,
+
+                "decision": "REJECTED",
+
+                "gate": "CLOSED",
+
+                "human_review_required": False,
+
+                "human_review_status": "COMPLETED",
+
+                "human_review_decision": "REJECTED",
+
+                "human_review": latest_review,
+            }
+
+            return {
+                "workflow": "bkk_case_workflow",
+
+                "case_id": case_id,
+
+                "data_quality": data_quality,
+
+                "process_analysis": process_analysis,
+
+                "medical_analysis": medical_analysis,
+
+                "triage": triage,
+
+                "governance": governance,
+
+                "recommendation": (
+                    "Fall wurde durch die fachliche Prüfung "
+                    "abgelehnt. Workflow wurde beendet."
+                ),
+
+                "human_review_required": False,
+
+                "status": "rejected",
+
+                "human_review": latest_review,
+            }
+
+        # -----------------------------------------------------
+        # Unbekannte Entscheidung
+        # -----------------------------------------------------
 
         governance = {
             **governance,
             "human_review": latest_review,
         }
 
-    # ---------------------------------------------------------
-    # Human Review weiterhin erforderlich.
-    # ---------------------------------------------------------
+    # =========================================================
+    # Human Review erforderlich
+    # =========================================================
 
     if governance.get("decision") == "HUMAN_REVIEW":
 
         return {
             "workflow": "bkk_case_workflow",
+
             "case_id": case_id,
+
             "data_quality": data_quality,
+
             "process_analysis": process_analysis,
+
             "medical_analysis": medical_analysis,
+
             "triage": triage,
+
             "governance": governance,
+
             "recommendation": (
                 "Workflow pausiert. Eine fachliche Prüfung "
                 "durch Mitarbeitende ist erforderlich."
             ),
+
             "human_review_required": True,
+
             "status": "waiting_for_human_review",
+
             "human_review": latest_review,
         }
 
-    # ---------------------------------------------------------
-    # Normal abgeschlossen.
-    # ---------------------------------------------------------
+    # =========================================================
+    # Normal abgeschlossen
+    # =========================================================
 
     return {
         "workflow": "bkk_case_workflow",
+
         "case_id": case_id,
+
         "data_quality": data_quality,
+
         "process_analysis": process_analysis,
+
         "medical_analysis": medical_analysis,
+
         "triage": triage,
+
         "governance": governance,
+
         "recommendation": (
             "Workflow erfolgreich abgeschlossen."
         ),
+
         "human_review_required": False,
+
         "status": "completed",
+
         "human_review": latest_review,
     }
 
 
 @router.get("/history/{case_id}")
-def case_history(case_id: int):
+def case_history(
+    case_id: int,
+):
     return {
         "case_id": case_id,
         "history": get_case_history(case_id),
@@ -249,6 +412,11 @@ def submit_human_review(
     review: HumanReviewRequest,
 ):
     try:
+
+        # =====================================================
+        # Human Review speichern
+        # =====================================================
+
         event = record_human_review(
             case_id=case_id,
             decision=review.decision,
@@ -256,14 +424,30 @@ def submit_human_review(
             comment=review.comment,
         )
 
-        history = get_case_history(case_id)
+        # =====================================================
+        # Aktuellen Audit Trail laden
+        # =====================================================
+
+        history = get_case_history(
+            case_id
+        )
 
         latest_review = None
 
         for history_event in reversed(history):
-            if history_event.get("action") == "HUMAN_REVIEW_DECISION":
+
+            if (
+                history_event.get("action")
+                == "HUMAN_REVIEW_DECISION"
+            ):
+
                 latest_review = history_event
+
                 break
+
+        # =====================================================
+        # Ergebnis für Frontend aufbauen
+        # =====================================================
 
         analysis = _build_result_from_history(
             case_id,
@@ -273,18 +457,23 @@ def submit_human_review(
 
         return {
             "success": True,
+
             "case_id": case_id,
+
             "review": event,
+
             "analysis": analysis,
         }
 
     except ValueError as e:
+
         raise HTTPException(
             status_code=400,
             detail=str(e),
         )
 
     except Exception as e:
+
         raise HTTPException(
             status_code=500,
             detail=str(e),

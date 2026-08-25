@@ -31,39 +31,36 @@ class GovernanceAgent(BaseAgent):
             or "UNKNOWN"
         )
 
-        # ---------------------------------------------------------
+        # =========================================================
         # Rule 1: Datenqualität
-        # ---------------------------------------------------------
+        # =========================================================
 
         if quality_status == "REVIEW_REQUIRED":
-
             rules_triggered.append(
                 "DATA_QUALITY_REVIEW"
             )
 
-        # ---------------------------------------------------------
-        # Rule 2: Hohes Triage-Risiko
-        # ---------------------------------------------------------
-
-        if priority == "HIGH":
-
-            rules_triggered.append(
-                "HIGH_RISK"
-            )
-
-        # ---------------------------------------------------------
-        # Rule 3: Medizinisches Risiko
-        # ---------------------------------------------------------
+        # =========================================================
+        # Rule 2: Medizinisches Risiko
+        # =========================================================
 
         if risk_level == "HIGH":
-
             rules_triggered.append(
                 "MEDICAL_REVIEW_REQUIRED"
             )
 
-        # ---------------------------------------------------------
+        # =========================================================
+        # Rule 3: Hohe Triage-Priorität
+        # =========================================================
+
+        if priority == "HIGH":
+            rules_triggered.append(
+                "HIGH_RISK"
+            )
+
+        # =========================================================
         # Governance Decision
-        # ---------------------------------------------------------
+        # =========================================================
 
         human_review_required = (
             len(rules_triggered) > 0
@@ -74,26 +71,30 @@ class GovernanceAgent(BaseAgent):
             decision = "HUMAN_REVIEW"
             gate = "ACTIVE"
 
-            if "HIGH_RISK" in rules_triggered:
+            if "DATA_QUALITY_REVIEW" in rules_triggered:
 
                 reason = (
-                    "Hochrisikofall erkannt. "
-                    "Eine qualifizierte fachliche Prüfung durch "
-                    "Mitarbeitende ist vor der weiteren Bearbeitung erforderlich."
+                    "Die Falldaten sind unvollständig oder "
+                    "inkonsistent. Eine manuelle Prüfung ist erforderlich."
                 )
 
-            elif "DATA_QUALITY_REVIEW" in rules_triggered:
+            elif (
+                "MEDICAL_REVIEW_REQUIRED"
+                in rules_triggered
+            ):
 
                 reason = (
-                    "Case data is incomplete or inconsistent. "
-                    "Manual review is required."
+                    "Ein erhöhtes medizinisches Risiko wurde erkannt. "
+                    "Eine qualifizierte fachliche Prüfung durch "
+                    "Mitarbeitende ist vor der weiteren Bearbeitung erforderlich."
                 )
 
             else:
 
                 reason = (
-                    "Medical review is required "
-                    "before further processing."
+                    "Eine hohe Triage-Priorität wurde erkannt. "
+                    "Eine qualifizierte fachliche Prüfung durch "
+                    "Mitarbeitende ist vor der weiteren Bearbeitung erforderlich."
                 )
 
         else:
@@ -102,31 +103,19 @@ class GovernanceAgent(BaseAgent):
             gate = "PASS"
 
             reason = (
-                "No governance rule requiring human review "
-                "was triggered."
+                "Keine Governance-Regel erfordert eine "
+                "fachliche Prüfung."
             )
 
         return {
-
             "agent": self.name,
-
             "case_id": case.id,
-
             "decision": decision,
-
             "gate": gate,
-
-            "human_review_required": (
-                human_review_required
-            ),
-
+            "human_review_required": human_review_required,
             "reason": reason,
-
             "rules_triggered": rules_triggered,
-
             "risk_level": risk_level,
-
             "triage_priority": priority,
-
-            "data_quality_status": quality_status
+            "data_quality_status": quality_status,
         }

@@ -1,10 +1,11 @@
 import os
+
 import requests
 
 
 OLLAMA_EMBED_URL = os.getenv(
     "OLLAMA_EMBED_URL",
-    "http://host.docker.internal:11434/api/embed"
+    "http://localhost:11434/api/embed"
 )
 
 EMBEDDING_MODEL = os.getenv(
@@ -25,9 +26,9 @@ def create_embedding(text: str) -> list[float]:
         OLLAMA_EMBED_URL,
         json={
             "model": EMBEDDING_MODEL,
-            "input": text
+            "input": text,
         },
-        timeout=120
+        timeout=120,
     )
 
     response.raise_for_status()
@@ -42,4 +43,3 @@ def create_embedding(text: str) -> list[float]:
         )
 
     return embeddings[0]
-

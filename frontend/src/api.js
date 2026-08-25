@@ -1,43 +1,30 @@
 const API_BASE = "/api";
 
-
 async function request(url, options = {}) {
-
-  const response = await fetch(
-    `${API_BASE}${url}`,
-    {
-      ...options,
-
-      headers: {
-        "Content-Type": "application/json",
-        ...(options.headers || {})
-      }
-    }
-  );
-
+  const response = await fetch(`${API_BASE}${url}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
 
   if (!response.ok) {
-
     let message = `API error ${response.status}`;
 
     try {
-
       const data = await response.json();
 
       if (data?.detail) {
         message = data.detail;
       }
-
     } catch {
-
       try {
-
         const text = await response.text();
 
         if (text) {
           message = text;
         }
-
       } catch {
         // Ignore parsing errors
       }
@@ -46,123 +33,74 @@ async function request(url, options = {}) {
     throw new Error(message);
   }
 
-
   return response.json();
 }
-
 
 /*
  * Patienten
  */
 export async function getPatients() {
-
-  return request(
-    "/patients/"
-  );
+  return request("/patients/");
 }
-
 
 /*
  * Fälle
  */
 export async function getCases() {
-
-  return request(
-    "/cases/"
-  );
+  return request("/cases/");
 }
 
-
 /*
- * Einzelnen Fall analysieren
+ * Fallanalyse
  */
 export async function analyzeCase(caseId) {
-
   if (!caseId) {
-    throw new Error(
-      "Keine Case-ID angegeben."
-    );
+    throw new Error("Keine Case-ID angegeben.");
   }
 
-  return request(
-    `/agents/analyze/${caseId}`
-  );
+  return request(`/agents/analyze/${caseId}`);
 }
-
 
 /*
- * Medizinische Dokumente
+ * Dokumente
  */
 export async function getDocuments() {
-
-  return request(
-    "/documents/"
-  );
+  return request("/documents/");
 }
-
 
 /*
  * RAG-Suche
  */
-export async function searchRag(
-  query,
-  caseId = null,
-  limit = 3
-) {
-
+export async function searchRag(query, caseId = null, limit = 3) {
   if (!query?.trim()) {
-
     throw new Error(
       "Die RAG-Suche benötigt eine Suchanfrage."
     );
   }
 
+  const params = new URLSearchParams();
 
-  const params =
-    new URLSearchParams();
-
-  params.set(
-    "q",
-    query
-  );
+  params.set("q", query);
 
   if (caseId) {
-
-    params.set(
-      "case_id",
-      caseId
-    );
+    params.set("case_id", caseId);
   }
 
-  params.set(
-    "limit",
-    limit
-  );
+  params.set("limit", limit);
 
-
-  return request(
-    `/rag/search?${params.toString()}`
-  );
+  return request(`/rag/search?${params.toString()}`);
 }
-
-
 
 /*
  * Agent Execution History
  */
 export async function getCaseHistory(caseId) {
-
   if (!caseId) {
-    throw new Error(
-      "Keine Case-ID angegeben."
-    );
+    throw new Error("Keine Case-ID angegeben.");
   }
 
-  return request(
-    `/agents/history/${caseId}`
-  );
+  return request(`/agents/history/${caseId}`);
 }
-
 
 /*
  * Human Review
@@ -173,47 +111,52 @@ export async function submitHumanReview(
   reviewer = "Human Reviewer",
   comment = null
 ) {
-
   if (!caseId) {
-    throw new Error(
-      "Keine Case-ID angegeben."
-    );
+    throw new Error("Keine Case-ID angegeben.");
   }
 
-  return request(
-    `/agents/review/${caseId}`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        decision,
-        reviewer,
-        comment
-      })
-    }
-  );
+  return request(`/agents/review/${caseId}`, {
+    method: "POST",
+    body: JSON.stringify({
+      decision,
+      reviewer,
+      comment,
+    }),
+  });
 }
-
 
 /*
  * Versicherer-Portal
  */
 export async function getInsurerCases() {
-
-  return request(
-    "/insurer/cases"
-  );
+  return request("/insurer/cases");
 }
 
-
 export async function getInsurerCase(caseId) {
-
   if (!caseId) {
-    throw new Error(
-      "Keine Case-ID angegeben."
-    );
+    throw new Error("Keine Case-ID angegeben.");
   }
 
-  return request(
-    `/insurer/cases/${caseId}`
-  );
+  return request(`/insurer/cases/${caseId}`);
+}
+
+/*
+ * Databricks Case Analytics
+ */
+export async function getCaseAnalytics() {
+  return request("/analytics/cases");
+}
+
+/*
+ * Databricks Sick-Pay Analytics
+ */
+export async function getSickPayAnalytics() {
+  return request("/analytics/sick-pay");
+}
+
+/*
+ * Databricks Case Summary
+ */
+export async function getCaseSummary() {
+  return request("/analytics/summary");
 }

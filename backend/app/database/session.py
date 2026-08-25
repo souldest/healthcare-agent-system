@@ -1,12 +1,15 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import os
 
-DATABASE_URL = (
-     "postgresql://healthcare:healthcare@healthcare-postgres:5432/healthcare_ai"
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql://healthcare:healthcare@localhost:5433/healthcare_ai"
 )
 
 engine = create_engine(
-    DATABASE_URL
+    DATABASE_URL,
+    pool_pre_ping=True
 )
 
 SessionLocal = sessionmaker(

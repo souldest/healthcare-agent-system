@@ -94,6 +94,9 @@ jobs:
 
   docker:
     name: Docker / Compose Validation
+    needs:
+      - backend
+      - frontend
     runs-on: ubuntu-latest
 
     steps:

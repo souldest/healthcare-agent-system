@@ -1,7 +1,8 @@
 export function PipelineStep({
   number,
   name,
-  status
+  status,
+  description
 }) {
   return (
     <div className="pipeline-step">
@@ -17,6 +18,12 @@ export function PipelineStep({
       <div className="pipeline-status">
         {status}
       </div>
+
+      {description && (
+        <div className="pipeline-description">
+          {description}
+        </div>
+      )}
 
     </div>
   );

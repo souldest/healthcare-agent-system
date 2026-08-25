@@ -6,15 +6,23 @@ export default defineConfig({
 
   server: {
     host: "0.0.0.0",
-    port: 5173,
+    port: 5174,
 
     proxy: {
       "/api": {
-        target: "http://backend:8000",
+        target: "http://localhost:8002",
         changeOrigin: true,
+      },
 
-        rewrite: (path) => path.replace(/^\/api/, "")
-      }
-    }
-  }
+      "/patients": {
+        target: "http://localhost:8002",
+        changeOrigin: true,
+      },
+
+      "/cases": {
+        target: "http://localhost:8002",
+        changeOrigin: true,
+      },
+    },
+  },
 });

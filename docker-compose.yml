@@ -27,6 +27,10 @@ services:
     environment:
       CHROMA_HOST: healthcare-chroma
       CHROMA_PORT: "8000"
+      DATABASE_URL: ${DATABASE_URL}
+      DATABRICKS_HOST: ${DATABRICKS_HOST}
+      DATABRICKS_WAREHOUSE_ID: ${DATABRICKS_WAREHOUSE_ID}
+      DATABRICKS_TOKEN: ${DATABRICKS_TOKEN}
     volumes:
       - ./backend:/app
     depends_on:

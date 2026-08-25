@@ -47,12 +47,13 @@ export default function CaseAssessment({
 
           <PipelineStep
             number="01"
-            name="Data Quality"
+            name="Data Quality Agent"
             status={
               dataQuality.quality_status === "VALID"
                 ? "VALID"
                 : "REVIEW"
             }
+            description="Validiert Fall- und Dokumentdaten"
           />
 
           <PipelineLine />
@@ -61,6 +62,7 @@ export default function CaseAssessment({
             number="02"
             name="Process Agent"
             status="ANALYZED"
+            description="Analysiert Workflow und nächsten Prozessschritt"
           />
 
           <PipelineLine />
@@ -73,6 +75,7 @@ export default function CaseAssessment({
                 ? `COMPLETED · ${ragFindings.length} RAG`
                 : "COMPLETED"
             }
+            description="LLM + RAG für medizinische Fallanalyse"
           />
 
           <PipelineLine />
@@ -83,6 +86,7 @@ export default function CaseAssessment({
             status={
               triage.priority || "UNKNOWN"
             }
+            description="Bewertet medizinisches Risiko und Priorität"
           />
 
           <PipelineLine />
@@ -96,7 +100,24 @@ export default function CaseAssessment({
                 ? "HUMAN_REVIEW"
                 : "CLEAR")
             }
+            description="Prüft Regeln und kontrolliertes Entscheidungs-Gate"
           />
+
+          {humanReview && (
+            <>
+              <PipelineLine />
+
+              <PipelineStep
+                number="06"
+                name="Human Review"
+                status={
+                  analysis?.governance?.human_review_decision ||
+                  "PENDING"
+                }
+                description="Fachliche Entscheidung durch Mitarbeitende"
+              />
+            </>
+          )}
 
         </div>
 

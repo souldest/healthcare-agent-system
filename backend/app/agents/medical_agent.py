@@ -5,7 +5,10 @@ from app.schemas.medical import MedicalAnalysis
 from app.agents.base_agent import BaseAgent
 
 from app.llm.provider import LLMProvider
-from app.llm.prompts import MEDICAL_ANALYSIS_PROMPT
+from app.llm.prompts import (
+    MEDICAL_ANALYSIS_PROMPT,
+    SICK_PAY_ANALYSIS_PROMPT
+)
 
 from app.tools.database_tool import (
     get_case,
@@ -193,7 +196,20 @@ class MedicalAgent(BaseAgent):
         # 6. LLM-Prompt erstellen
         # =========================================================
 
-        prompt = MEDICAL_ANALYSIS_PROMPT.format(
+        case_type = (
+            case.case_type or ""
+        ).upper()
+
+        if case_type in [
+            "SICK_PAY",
+            "KRANKENGELD",
+            "KRANKENGELD-FALLMANAGEMENT"
+        ]:
+            analysis_prompt = SICK_PAY_ANALYSIS_PROMPT
+        else:
+            analysis_prompt = MEDICAL_ANALYSIS_PROMPT
+
+        prompt = analysis_prompt.format(
             case_description=case.description or "",
             documents=rag_text
         )
@@ -288,6 +304,28 @@ class MedicalAgent(BaseAgent):
         # Risiko auch innerhalb der Analyse aktualisieren.
 
         analysis["risk_level"] = risk
+
+
+        # =========================================================
+        # 10a. Fachliche Schutzlogik für Krankengeldfälle
+        #
+        # Bei SICK_PAY darf das LLM keine fachfremde medizinische
+        # Empfehlung wie z.B. eine kardiologische Untersuchung
+        # erzeugen. Der weitere Schritt ist die Prüfung der
+        # Arbeitsunfähigkeit und der relevanten Unterlagen.
+        # =========================================================
+
+        if case_type in [
+            "SICK_PAY",
+            "KRANKENGELD",
+            "KRANKENGELD-FALLMANAGEMENT"
+        ]:
+
+            analysis["recommended_action"] = (
+                "Unterlagen zur Arbeitsunfähigkeit und die für "
+                "die weitere Anspruchsprüfung erforderlichen "
+                "Angaben durch die zuständige Fachstelle prüfen."
+            )
 
 
         # =========================================================

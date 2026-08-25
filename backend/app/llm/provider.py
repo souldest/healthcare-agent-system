@@ -19,7 +19,7 @@ class LLMProvider:
 
         self.ollama_url = os.getenv(
             "OLLAMA_URL",
-            "http://host.docker.internal:11434/api/generate"
+            "http://localhost:11434/api/generate"
         )
 
 

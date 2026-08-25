@@ -5,7 +5,10 @@ import {
   getCases,
   analyzeCase,
   getCaseHistory,
-  submitHumanReview
+  submitHumanReview,
+  getCaseAnalytics,
+  getSickPayAnalytics,
+  getCaseSummary
 } from "./api";
 
 import KpiCard from "./components/KpiCard";
@@ -27,6 +30,10 @@ function App() {
   const [patients, setPatients] = useState([]);
   const [cases, setCases] = useState([]);
 
+  const [caseAnalytics, setCaseAnalytics] = useState([]);
+  const [sickPayAnalytics, setSickPayAnalytics] = useState([]);
+  const [caseSummary, setCaseSummary] = useState(null);
+
   const [selectedCase, setSelectedCase] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [history, setHistory] = useState([]);
@@ -40,6 +47,20 @@ function App() {
 
   const [view, setView] = useState("operations");
 
+  const getPatient = (patientId) =>
+    patients.find(
+      (patient) => patient.id === patientId
+    );
+
+  const highPriorityCases = cases.filter(
+    (caseItem) =>
+      caseItem.priority === "HIGH" ||
+      caseItem.priority === "high" ||
+      caseItem.priority === "CRITICAL" ||
+      caseItem.priority === "critical"
+  ).length;
+
+
 
   useEffect(() => {
 
@@ -50,16 +71,65 @@ function App() {
         setLoading(true);
         setError(null);
 
-        const [
-          patientsData,
-          casesData
-        ] = await Promise.all([
+        const results = await Promise.allSettled([
           getPatients(),
-          getCases()
+          getCases(),
+          getCaseAnalytics(),
+          getSickPayAnalytics(),
+          getCaseSummary()
         ]);
+
+        console.log("API RESULTS:", results);
+
+        const [
+          patientsResult,
+          casesResult,
+          caseAnalyticsResult,
+          sickPayAnalyticsResult,
+          caseSummaryResult
+        ] = results;
+
+        if (patientsResult.status === "rejected") {
+          throw new Error(
+            `getPatients(): ${patientsResult.reason?.message || patientsResult.reason}`
+          );
+        }
+
+        if (casesResult.status === "rejected") {
+          throw new Error(
+            `getCases(): ${casesResult.reason?.message || casesResult.reason}`
+          );
+        }
+
+        if (caseAnalyticsResult.status === "rejected") {
+          throw new Error(
+            `getCaseAnalytics(): ${caseAnalyticsResult.reason?.message || caseAnalyticsResult.reason}`
+          );
+        }
+
+        if (sickPayAnalyticsResult.status === "rejected") {
+          throw new Error(
+            `getSickPayAnalytics(): ${sickPayAnalyticsResult.reason?.message || sickPayAnalyticsResult.reason}`
+          );
+        }
+
+        if (caseSummaryResult.status === "rejected") {
+          throw new Error(
+            `getCaseSummary(): ${caseSummaryResult.reason?.message || caseSummaryResult.reason}`
+          );
+        }
+
+        const patientsData = patientsResult.value;
+        const casesData = casesResult.value;
+        const caseAnalyticsData = caseAnalyticsResult.value;
+        const sickPayAnalyticsData = sickPayAnalyticsResult.value;
+        const caseSummaryData = caseSummaryResult.value;
 
         setPatients(patientsData || []);
         setCases(casesData || []);
+        setCaseAnalytics(caseAnalyticsData || []);
+        setSickPayAnalytics(sickPayAnalyticsData || []);
+        setCaseSummary(caseSummaryData || null);
 
       } catch (err) {
 
@@ -85,24 +155,6 @@ function App() {
 
       setAnalyzing(true);
       setError(null);
-
-      // ---------------------------------------------------------
-      // Derselbe Fall ist bereits geöffnet:
-      // keine neue Agent-Pipeline starten.
-      // Nur den aktuellen Audit Trail laden.
-      // ---------------------------------------------------------
-
-      if (selectedCase?.id === caseItem.id && analysis) {
-
-        const historyResult =
-          await getCaseHistory(caseItem.id);
-
-        setHistory(
-          historyResult?.history || []
-        );
-
-        return;
-      }
 
       // ---------------------------------------------------------
       // Neuen Fall auswählen.
@@ -162,23 +214,36 @@ function App() {
       setReviewMessage(null);
       setError(null);
 
-      await submitHumanReview(
-        selectedCase.id,
-        decision,
-        "Demo Reviewer",
-        comment
-      );
+      const reviewResult =
+        await submitHumanReview(
+          selectedCase.id,
+          decision,
+          "Human Reviewer",
+          comment
+        );
 
-      // Analyse nach Human Review neu laden,
-      // damit Governance, Status und Recommendation
-      // sofort den aktuellen Backend-Zustand zeigen.
-      const result =
-        await analyzeCase(selectedCase.id);
+      /*
+       * Das vom Backend rekonstruierte Ergebnis direkt übernehmen.
+       *
+       * WICHTIG:
+       * Nach Human Review KEIN analyzeCase() ausführen.
+       * Ein neuer Analyse-Run würde das Governance-Gate erneut
+       * erzeugen und die gerade getroffene Fachentscheidung
+       * überschreiben.
+       */
+      if (reviewResult?.analysis) {
+        setAnalysis(reviewResult.analysis);
+      }
 
-      setAnalysis(result);
+      // Nach der Human-Review-Entscheidung NICHT erneut
+      // analyzeCase() aufrufen.
+      //
+      // Ein erneuter analyzeCase()-Aufruf würde einen neuen
+      // Workflow-Run starten und unmittelbar wieder ein
+      // HUMAN_REVIEW-Gate erzeugen.
+      //
+      // Deshalb nur den aktuellen Audit Trail neu laden.
 
-      // Audit Trail aktualisieren, ohne eine
-      // zusätzliche Pipeline-Ausführung zu erzeugen.
       const historyResult =
         await getCaseHistory(
           selectedCase.id
@@ -208,52 +273,6 @@ function App() {
       setReviewing(false);
 
     }
-  }
-
-
-
-  function getPatient(patientId) {
-
-    return patients.find(
-      (patient) => patient.id === patientId
-    );
-  }
-
-
-  const highPriorityCases = useMemo(
-    () =>
-      cases.filter(
-        (item) => item.priority === "HIGH"
-      ).length,
-    [cases]
-  );
-
-
-  if (loading) {
-
-    return (
-      <div className="app-shell loading-screen">
-
-        <div className="loading-card">
-
-          <div className="brand-mark">
-            MB
-          </div>
-
-          <div className="loading-spinner" />
-
-          <h2>
-            BKK AI Operations
-          </h2>
-
-          <p>
-            Initialisiere Agentic-AI-Workflow...
-          </p>
-
-        </div>
-
-      </div>
-    );
   }
 
 
@@ -405,8 +424,8 @@ function App() {
 
           <KpiCard
             label="Aktive Fälle"
-            value={cases.length}
-            description="Fälle im Workflow"
+            value={caseSummary?.open_cases ?? cases.length}
+            description="Offene Fälle laut Databricks"
             icon="◈"
           />
 
@@ -420,18 +439,136 @@ function App() {
 
           <KpiCard
             label="Hohe Priorität"
-            value={highPriorityCases}
+            value={caseSummary?.high_priority_cases ?? highPriorityCases}
             description="Fälle mit Handlungsbedarf"
             icon="!"
-            warning={highPriorityCases > 0}
+            warning={(caseSummary?.high_priority_cases ?? highPriorityCases) > 0}
           />
 
           <KpiCard
-            label="Agent Pipeline"
-            value="5"
-            description="Specialized Agents"
+              label="Kategorien"
+              value={caseSummary?.total_categories ?? caseAnalytics.length}
+              description="Case-Kategorien in Databricks"
             icon="◎"
           />
+
+        </section>
+
+
+        {/* =====================================================
+            DATABRICKS ANALYTICS
+        ===================================================== */}
+
+        <section className="analytics-panel">
+
+          <div className="panel-header">
+
+            <div>
+              <div className="panel-kicker">
+                DATABRICKS ANALYTICS
+              </div>
+
+              <h2>
+                Healthcare Case Analytics
+              </h2>
+            </div>
+
+            <div className="case-count">
+              {caseAnalytics.length} Kategorien
+            </div>
+
+          </div>
+
+
+          <div className="analytics-grid">
+
+            {caseAnalytics.map((item) => (
+
+              <div
+                className="analytics-card"
+                key={item.case_type}
+              >
+
+                <div className="analytics-card-header">
+                  <strong>
+                    {item.case_type}
+                  </strong>
+
+                  <span>
+                    {item.total_cases} Fälle
+                  </span>
+                </div>
+
+                <div className="analytics-metrics">
+
+                  <div>
+                    <span>Offen</span>
+                    <strong>
+                      {item.open_cases}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>High Priority</span>
+                    <strong>
+                      {item.high_priority_cases}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Geschlossen</span>
+                    <strong>
+                      {item.closed_cases}
+                    </strong>
+                  </div>
+
+                </div>
+
+              </div>
+
+            ))}
+
+
+            {sickPayAnalytics.map((item) => (
+
+              <div
+                className="analytics-card sick-pay-card"
+                key={`sick-pay-${item.case_type}`}
+              >
+
+                <div className="analytics-card-header">
+                  <strong>
+                    Sick Pay
+                  </strong>
+
+                  <span>
+                    {item.total_cases} Fälle
+                  </span>
+                </div>
+
+                <div className="analytics-metrics">
+
+                  <div>
+                    <span>Offen</span>
+                    <strong>
+                      {item.open_cases}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>High Priority</span>
+                    <strong>
+                      {item.high_priority_cases}
+                    </strong>
+                  </div>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
 
         </section>
 
@@ -704,6 +841,12 @@ function AnalysisResult({
   handleHumanReview
 }) {
 
+  console.log("=== ANALYSIS RESULT DEBUG ===");
+  console.log("analysis:", analysis);
+  console.log("medical_analysis:", analysis?.medical_analysis);
+  console.log("triage:", analysis?.triage);
+  console.log("governance:", analysis?.governance);
+
   const medical =
     analysis?.medical_analysis || {};
 
@@ -741,24 +884,216 @@ function AnalysisResult({
     medical?.rag_findings || [];
 
 
-  const reviewApproved =
+  /*
+   * ============================================================
+   * HUMAN REVIEW / GOVERNANCE
+   * ============================================================
+   *
+   * Eine finale Freigabe liegt ausschließlich dann vor, wenn
+   * Governance explizit APPROVED + PASSED meldet und kein
+   * Human Review mehr erforderlich ist.
+   *
+   * HIGH / CRITICAL erzwingen eine fachliche Prüfung.
+   * Dadurch kann ein Risiko-Case nicht versehentlich als CLEAR
+   * dargestellt werden, nur weil ein älterer Governance-Run
+   * noch APPROVED enthält.
+   */
+
+  const riskUpper =
+    String(risk || "UNKNOWN").toUpperCase();
+
+  const triagePriority =
+    String(triage?.priority || "").toUpperCase();
+
+  const isHighRisk =
+    riskUpper === "HIGH" ||
+    riskUpper === "CRITICAL" ||
+    triagePriority === "HIGH" ||
+    triagePriority === "CRITICAL";
+
+  const explicitHumanReviewRequired =
+    analysis?.human_review_required === true ||
+    governance?.human_review_required === true;
+
+  /*
+   * WICHTIG:
+   *
+   * governance.decision === "APPROVED" ist KEINE Human-Review-
+   * Entscheidung.
+   *
+   * Eine Freigabe darf erst dann als abgeschlossen dargestellt
+   * werden, wenn tatsächlich eine Human-Review-Entscheidung
+   * dokumentiert wurde.
+   */
+  const rawHumanReviewDecision =
+    governance?.human_review_decision ??
+    governance?.human_review?.decision ??
+    null;
+
+  const normalizedHumanDecision =
+    String(rawHumanReviewDecision || "").toUpperCase();
+
+  const humanReviewApproved =
+    normalizedHumanDecision === "APPROVED";
+
+  const humanReviewRejected =
+    normalizedHumanDecision === "REJECTED";
+
+  const humanReviewChangesRequested =
+    normalizedHumanDecision === "REQUEST_CHANGES" ||
+    normalizedHumanDecision === "CHANGES REQUESTED";
+
+  /*
+   * HIGH/CRITICAL oder explizites Review-Gate:
+   * solange keine echte Human-Review-Entscheidung vorliegt,
+   * bleibt der Fall im HUMAN_REVIEW-Zustand.
+   */
+  const humanReviewRequired =
+    !humanReviewApproved &&
+    !humanReviewRejected &&
+    !humanReviewChangesRequested &&
+    (
+      explicitHumanReviewRequired ||
+      isHighRisk
+    );
+
+  /*
+   * Ein Fall ist nur dann wirklich abgeschlossen,
+   * wenn die Human Review tatsächlich APPROVED wurde.
+   *
+   * Bei nicht-reviewpflichtigen Fällen darf Governance selbst
+   * APPROVED/PASSED sein.
+   */
+  const governanceApprovedWithoutHumanReview =
+    !isHighRisk &&
+    !explicitHumanReviewRequired &&
     governance?.decision === "APPROVED" &&
     governance?.gate === "PASSED" &&
     governance?.human_review_required === false;
 
+  const reviewApproved =
+    humanReviewApproved ||
+    governanceApprovedWithoutHumanReview;
+
   const humanReview =
-    !reviewApproved &&
-    (
-      analysis?.human_review_required === true ||
-      governance?.human_review_required === true
-    );
+    humanReviewRequired;
 
   const governanceRules =
     governance?.rules_triggered || [];
 
   const governanceReason =
     governance?.reason ||
-    "Eine qualifizierte fachliche Prüfung durch Mitarbeitende ist vor der weiteren Bearbeitung erforderlich.";
+    (
+      isHighRisk
+        ? "Aufgrund des erhöhten medizinischen Risikos ist eine qualifizierte fachliche Prüfung durch Mitarbeitende erforderlich."
+        : "Eine qualifizierte fachliche Prüfung durch Mitarbeitende ist vor der weiteren Bearbeitung erforderlich."
+    );
+
+  const decision =
+    String(governance?.decision || "").toUpperCase();
+
+  const gate =
+    String(governance?.gate || "").toUpperCase();
+
+  const controlledContinue =
+    decision === "CONTROLLED_CONTINUE" &&
+    gate === "PASS" &&
+    !humanReviewRequired;
+
+  const currentGovernanceStatus =
+    humanReviewApproved
+      ? "APPROVED"
+      : humanReviewRejected
+        ? "REJECTED"
+        : humanReviewChangesRequested
+          ? "REQUEST_CHANGES"
+          : controlledContinue
+            ? "CONTROLLED_CONTINUE"
+            : humanReviewRequired
+              ? "HUMAN_REVIEW"
+              : governanceApprovedWithoutHumanReview
+                ? "APPROVED"
+                : decision || "PENDING";
+
+  const currentGovernanceGate =
+    humanReviewApproved ||
+    governanceApprovedWithoutHumanReview
+      ? "PASSED"
+      : controlledContinue
+        ? "PASS"
+        : humanReviewRequired
+          ? "HUMAN_REVIEW"
+          : gate || "ACTIVE";
+
+  const currentHumanReviewStatus =
+    humanReviewApproved
+      ? "COMPLETED"
+      : humanReviewRejected
+        ? "REJECTED"
+        : humanReviewChangesRequested
+          ? "REQUEST_CHANGES"
+          : humanReviewRequired
+            ? "REQUIRED"
+            : controlledContinue
+              ? "NOT_REQUIRED"
+              : "NOT_REQUIRED";
+
+  const currentHumanReviewDecision =
+    humanReviewApproved ||
+    humanReviewRejected ||
+    humanReviewChangesRequested
+      ? normalizedHumanDecision
+      : null;
+
+
+  const auditHistory = Array.isArray(history)
+    ? history.map((event, index, events) => {
+
+        const isLatestGovernanceEvent =
+          event?.agent === "Governance Agent" &&
+          event?.action === "GOVERNANCE_DECISION" &&
+          index === events
+            .map((item, i) =>
+              item?.agent === "Governance Agent" &&
+              item?.action === "GOVERNANCE_DECISION"
+                ? i
+                : -1
+            )
+            .filter(i => i >= 0)
+            .pop();
+
+        if (!isLatestGovernanceEvent) {
+          return event;
+        }
+
+        /*
+         * Der letzte Governance-Eintrag ist historisch.
+         * Für die Anzeige des aktuellen Status wird er mit dem
+         * aktuellen Governance-/Human-Review-Ergebnis gespiegelt.
+         */
+        return {
+          ...event,
+          status: currentGovernanceStatus,
+          result: JSON.stringify({
+            agent: "governance_agent",
+            case_id: analysis.case_id,
+            decision: currentGovernanceStatus,
+            gate: currentGovernanceGate,
+            human_review_required: humanReview,
+            reason: governanceReason,
+            rules_triggered: governanceRules,
+            risk_level: risk,
+            triage_priority: triage?.priority || risk,
+            data_quality_status:
+              dataQuality?.quality_status || "VALID",
+            human_review_status: currentHumanReviewStatus,
+            human_review_decision:
+              currentHumanReviewDecision
+          }),
+          current: true
+        };
+      })
+    : [];
 
 
   return (
@@ -813,18 +1148,87 @@ function AnalysisResult({
       </div>
 
 
-      <GovernancePanel
-        humanReview={humanReview}
-        governance={governance}
-        governanceReason={governanceReason}
-        governanceRules={governanceRules}
-        reviewing={reviewing}
-        reviewMessage={reviewMessage}
-        onReview={handleHumanReview}
+      <section className="agent-pipeline-panel">
+
+        <div className="panel-kicker">
+          AGENT PIPELINE
+        </div>
+
+        <h3>
+          Spezialisierte Agenten
+        </h3>
+
+        <div className="agent-pipeline-grid">
+
+          <div className="agent-card">
+            <span className="agent-number">01</span>
+            <div>
+              <strong>Data Quality Agent</strong>
+              <span>Datenqualität und Dokumente validieren</span>
+            </div>
+            <b>VALID</b>
+          </div>
+
+          <div className="agent-card">
+            <span className="agent-number">02</span>
+            <div>
+              <strong>Process Agent</strong>
+              <span>Workflow und nächsten Prozessschritt analysieren</span>
+            </div>
+            <b>ANALYZED</b>
+          </div>
+
+          <div className="agent-card">
+            <span className="agent-number">03</span>
+            <div>
+              <strong>Medical Agent</strong>
+              <span>Medizinische Analyse mit LLM + RAG</span>
+            </div>
+            <b>COMPLETED</b>
+          </div>
+
+          <div className="agent-card">
+            <span className="agent-number">04</span>
+            <div>
+              <strong>Triage Agent</strong>
+              <span>Risiko und Priorität bewerten</span>
+            </div>
+            <b>{risk}</b>
+          </div>
+
+          <div className="agent-card">
+            <span className="agent-number">05</span>
+            <div>
+              <strong>Governance Agent</strong>
+              <span>Entscheidungs-Gate und Regeln prüfen</span>
+            </div>
+            <b>
+              {currentGovernanceStatus}
+            </b>
+          </div>
+
+          <div className="agent-card human-agent">
+            <span className="agent-number">06</span>
+            <div>
+              <strong>Human Review</strong>
+              <span>Kontrollierte fachliche Übergabe</span>
+            </div>
+            <b>
+              {currentHumanReviewStatus}
+            </b>
+          </div>
+
+        </div>
+
+      </section>
+
+
+      <MedicalAnalysis
+        medicalAnalysis={medicalAnalysis}
+        findings={findings}
+        ragFindings={ragFindings}
+        documents={documents}
       />
-
-
-      <AuditTrail history={history} />
 
 
       <CaseAssessment
@@ -837,11 +1241,21 @@ function AnalysisResult({
       />
 
 
-      <MedicalAnalysis
-        medicalAnalysis={medicalAnalysis}
-        findings={findings}
-        ragFindings={ragFindings}
-        documents={documents}
+      <GovernancePanel
+        humanReview={humanReview}
+        governance={governance}
+        governanceReason={governanceReason}
+        governanceRules={governanceRules}
+        reviewing={reviewing}
+        reviewMessage={reviewMessage}
+        onReview={handleHumanReview}
+      />
+
+
+      <AuditTrail
+        history={auditHistory}
+        governance={governance}
+        humanReview={humanReview}
       />
 
 
