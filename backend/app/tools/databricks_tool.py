@@ -10,114 +10,54 @@ CATALOG = os.getenv("DATABRICKS_CATALOG", "workspace")
 SCHEMA = os.getenv("DATABRICKS_SCHEMA", "gold")
 
 
-CI = os.getenv("CI", "").lower() == "true"
+# CI verwendet deterministische Demo-Daten statt einer echten
+# Databricks-Verbindung. Produktion verwendet weiterhin Databricks.
+CI_CASE_ANALYTICS = [
+    {
+        "case_type": "CARDIOLOGY",
+        "total_cases": 2,
+        "open_cases": 1,
+        "high_priority_cases": 1,
+        "closed_cases": 1,
+    },
+    {
+        "case_type": "GENERAL",
+        "total_cases": 1,
+        "open_cases": 1,
+        "high_priority_cases": 0,
+        "closed_cases": 0,
+    },
+    {
+        "case_type": "SICK_PAY",
+        "total_cases": 1,
+        "open_cases": 1,
+        "high_priority_cases": 0,
+        "closed_cases": 0,
+    },
+]
 
+CI_SICK_PAY_ANALYTICS = [
+    {
+        "case_type": "SICK_PAY",
+        "total_cases": 1,
+        "open_cases": 1,
+        "high_priority_cases": 0,
+        "oldest_case": "2026-01-01",
+        "newest_case": "2026-01-01",
+    },
+]
 
-CI_RESULTS = {
-    "case_analytics": [
-        {
-            "case_type": "General",
-            "total_cases": 10,
-            "open_cases": 4,
-            "high_priority_cases": 2,
-            "closed_cases": 6,
-        },
-        {
-            "case_type": "Sick Pay",
-            "total_cases": 5,
-            "open_cases": 2,
-            "high_priority_cases": 1,
-            "closed_cases": 3,
-        },
-    ],
-    "sick_pay_analytics": [
-        {
-            "case_type": "Sick Pay",
-            "total_cases": 5,
-            "open_cases": 2,
-            "high_priority_cases": 1,
-            "oldest_case": "2026-01-01",
-            "newest_case": "2026-08-01",
-        },
-    ],
-    "case_summary": [
-        {
-            "total_cases": 15,
-            "open_cases": 6,
-            "high_priority_cases": 3,
-            "closed_cases": 9,
-            "total_categories": 2,
-            "sick_pay_cases": 5,
-        }
-    ],
+CI_CASE_SUMMARY = {
+    "total_cases": 4,
+    "open_cases": 3,
+    "high_priority_cases": 1,
+    "closed_cases": 1,
+    "total_categories": 3,
+    "sick_pay_cases": 1,
 }
 
 
-def _ci_response(statement: str) -> dict[str, Any]:
-    sql = statement.lower()
-
-    if "case_summary" in sql:
-        rows = CI_RESULTS["case_summary"]
-        columns = [
-            "total_cases",
-            "open_cases",
-            "high_priority_cases",
-            "closed_cases",
-            "total_categories",
-            "sick_pay_cases",
-        ]
-
-    elif "sick_pay_analytics" in sql:
-        rows = CI_RESULTS["sick_pay_analytics"]
-        columns = [
-            "case_type",
-            "total_cases",
-            "open_cases",
-            "high_priority_cases",
-            "oldest_case",
-            "newest_case",
-        ]
-
-    elif "case_analytics" in sql:
-        rows = CI_RESULTS["case_analytics"]
-        columns = [
-            "case_type",
-            "total_cases",
-            "open_cases",
-            "high_priority_cases",
-            "closed_cases",
-        ]
-
-    else:
-        raise RuntimeError(
-            f"No CI Databricks fixture for SQL: {statement}"
-        )
-
-    return {
-        "manifest": {
-            "schema": {
-                "columns": [
-                    {"name": column}
-                    for column in columns
-                ]
-            }
-        },
-        "result": {
-            "data_array": [
-                [row.get(column) for column in columns]
-                for row in rows
-            ]
-        },
-        "status": {
-            "state": "SUCCEEDED"
-        },
-    }
-
-
 def execute_databricks_sql(statement: str) -> dict[str, Any]:
-    if CI:
-        return _ci_response(statement)
-
     payload = {
         "warehouse_id": WAREHOUSE_ID,
         "catalog": CATALOG,
@@ -172,6 +112,9 @@ def _response_to_rows(
 
 
 def get_case_analytics() -> list[dict[str, Any]]:
+    if os.getenv("CI") == "true":
+        return CI_CASE_ANALYTICS
+
     response = execute_databricks_sql(
         """
         SELECT
@@ -189,6 +132,9 @@ def get_case_analytics() -> list[dict[str, Any]]:
 
 
 def get_sick_pay_analytics() -> list[dict[str, Any]]:
+    if os.getenv("CI") == "true":
+        return CI_SICK_PAY_ANALYTICS
+
     response = execute_databricks_sql(
         """
         SELECT
@@ -204,3 +150,35 @@ def get_sick_pay_analytics() -> list[dict[str, Any]]:
     )
 
     return _response_to_rows(response)
+
+
+def get_case_summary() -> dict[str, Any]:
+    if os.getenv("CI") == "true":
+        return CI_CASE_SUMMARY
+
+    response = execute_databricks_sql(
+        """
+        SELECT
+            total_cases,
+            open_cases,
+            high_priority_cases,
+            closed_cases,
+            total_categories,
+            sick_pay_cases
+        FROM case_summary
+        """
+    )
+
+    rows = _response_to_rows(response)
+
+    if not rows:
+        return {
+            "total_cases": 0,
+            "open_cases": 0,
+            "high_priority_cases": 0,
+            "closed_cases": 0,
+            "total_categories": 0,
+            "sick_pay_cases": 0,
+        }
+
+    return rows[0]
