@@ -1,10 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from backend.app.tools.databricks_tool import (
-    get_case_analytics,
-    get_case_summary,
-    get_sick_pay_analytics,
-)
+from backend.app.services.databricks_service import databricks_service
 
 
 router = APIRouter(
@@ -16,7 +12,7 @@ router = APIRouter(
 @router.get("/cases")
 def case_analytics():
     try:
-        return get_case_analytics()
+        return databricks_service.get_case_analytics()
 
     except Exception as exc:
         raise HTTPException(
@@ -28,7 +24,7 @@ def case_analytics():
 @router.get("/sick-pay")
 def sick_pay_analytics():
     try:
-        return get_sick_pay_analytics()
+        return databricks_service.get_sick_pay_analytics()
 
     except Exception as exc:
         raise HTTPException(
@@ -40,7 +36,7 @@ def sick_pay_analytics():
 @router.get("/summary")
 def case_summary():
     try:
-        return get_case_summary()
+        return databricks_service.get_case_summary()
 
     except Exception as exc:
         raise HTTPException(
