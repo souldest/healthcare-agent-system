@@ -7,10 +7,11 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
   build-release:
-    name: Build Release
+    name: Build and Publish Release
     runs-on: ubuntu-latest
 
     steps:
@@ -20,27 +21,46 @@ jobs:
       - name: Validate Docker Compose
         run: docker compose config
 
-      - name: Build backend image
-        run: |
-          docker build \
-            -t healthcare-agent-system-backend:${GITHUB_REF_NAME} \
-            ./backend
-
-      - name: Build frontend image
-        run: |
-          docker build \
-            -t healthcare-agent-system-frontend:${GITHUB_REF_NAME} \
-            ./frontend
-
-      - name: Save Docker images
-        run: |
-          docker save \
-            healthcare-agent-system-backend:${GITHUB_REF_NAME} \
-            healthcare-agent-system-frontend:${GITHUB_REF_NAME} \
-            -o healthcare-agent-system-${GITHUB_REF_NAME}.tar
-
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          name: healthcare-agent-system-${{ github.ref_name }}
-          path: healthcare-agent-system-${{ github.ref_name }}.tar
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set image names
+        run: |
+          echo "BACKEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/backend" >> "$GITHUB_ENV"
+          echo "FRONTEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/frontend" >> "$GITHUB_ENV"
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:${{ github.ref_name }}
+            ${{ env.BACKEND_IMAGE }}:latest
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:${{ github.ref_name }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+
+      - name: Summary
+        run: |
+          echo "========================================"
+          echo "GHCR release published successfully"
+          echo "========================================"
+          echo "Backend:"
+          echo "  $BACKEND_IMAGE:${GITHUB_REF_NAME}"
+          echo "  $BACKEND_IMAGE:latest"
+          echo
+          echo "Frontend:"
+          echo "  $FRONTEND_IMAGE:${GITHUB_REF_NAME}"
+          echo "  $FRONTEND_IMAGE:latest"
+          echo "========================================"
