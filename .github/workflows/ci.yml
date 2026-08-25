@@ -8,10 +8,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: backend
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -21,18 +17,62 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
+        working-directory: backend
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # PostgreSQL
+      - name: Start PostgreSQL
+        run: |
+          docker run -d \
+            --name healthcare-postgres \
+            -e POSTGRES_USER=healthcare \
+            -e POSTGRES_PASSWORD=healthcare \
+            -e POSTGRES_DB=healthcare_ai \
+            -p 5433:5432 \
+            postgres:16
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..60}; do
+            if docker exec healthcare-postgres \
+              pg_isready \
+              -U healthcare \
+              -d healthcare_ai; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            sleep 1
+          done
+
+      # ChromaDB
+      - name: Start ChromaDB
+        run: |
+          docker run -d \
+            --name healthcare-chroma \
+            -p 8004:8000 \
+            chromadb/chroma
+
+      - name: Wait for ChromaDB
+        run: |
+          for i in {1..60}; do
+            if curl -fs http://localhost:8004/api/v2/heartbeat > /dev/null; then
+              echo "ChromaDB is ready"
+              break
+            fi
+            sleep 1
+          done
+
+          curl -fs http://localhost:8004/api/v2/heartbeat
+
+      # Ollama
       - name: Install Ollama
-        working-directory: .
         run: |
           curl -fsSL https://ollama.com/install.sh | sh
 
       - name: Start Ollama
-        working-directory: .
         run: |
           ollama serve > /tmp/ollama.log 2>&1 &
 
@@ -41,19 +81,42 @@ jobs:
               echo "Ollama is ready"
               break
             fi
-
             sleep 1
           done
 
           curl -fs http://localhost:11434/api/tags > /dev/null
 
       - name: Pull embedding model
-        working-directory: .
         run: |
           ollama pull nomic-embed-text
 
+      # Environment
+      - name: Configure environment
+        run: |
+          cat > .env <<'ENVEOF'
+          DATABASE_URL=postgresql://healthcare:healthcare@localhost:5433/healthcare_ai
+          CHROMA_HOST=localhost
+          CHROMA_PORT=8004
+          OLLAMA_EMBED_URL=http://localhost:11434/api/embed
+          EMBEDDING_MODEL=nomic-embed-text:latest
+          ENVEOF
+
+      # Chroma test data
+      - name: Seed Chroma test data
+        env:
+          CHROMA_HOST: localhost
+          CHROMA_PORT: "8004"
+        run: |
+          python backend/scripts/seed_test_chroma.py
+
+      # API
       - name: Start API
-        working-directory: .
+        env:
+          DATABASE_URL: postgresql://healthcare:healthcare@localhost:5433/healthcare_ai
+          CHROMA_HOST: localhost
+          CHROMA_PORT: "8004"
+          OLLAMA_EMBED_URL: http://localhost:11434/api/embed
+          EMBEDDING_MODEL: nomic-embed-text:latest
         run: |
           PYTHONPATH="$GITHUB_WORKSPACE" \
           uvicorn backend.app.main:app \
@@ -62,29 +125,38 @@ jobs:
             > /tmp/api.log 2>&1 &
 
       - name: Wait for API
-        working-directory: .
         run: |
           for i in {1..60}; do
             if curl -fs http://localhost:8002/health > /dev/null; then
               echo "API is ready"
               break
             fi
-
             sleep 1
           done
 
-          curl -fs http://localhost:8002/health > /dev/null
+          curl -fs http://localhost:8002/health
 
-      - name: Run tests
+      # Tests
+      - name: Run RAG tests
         run: |
-          pytest -q
+          pytest -q backend/tests/test_rag.py
 
+      - name: Run analytics integration tests
+        run: |
+          pytest -q backend/tests/test_analytics_integration.py
+
+      # Logs on failure
       - name: Show service logs on failure
         if: failure()
-        working-directory: .
         run: |
           echo "===== Ollama ====="
           cat /tmp/ollama.log || true
 
           echo "===== API ====="
           cat /tmp/api.log || true
+
+          echo "===== ChromaDB ====="
+          docker logs healthcare-chroma || true
+
+          echo "===== PostgreSQL ====="
+          docker logs healthcare-postgres || true
