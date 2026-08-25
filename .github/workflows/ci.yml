@@ -140,16 +140,12 @@ jobs:
 
           curl -fs http://localhost:8002/health
 
-      # Tests
-      - name: Run RAG tests
-        run: |
-          pytest -q backend/tests/test_rag.py
-
-      - name: Run analytics integration tests
+      # Full test suite
+      - name: Run all backend tests
         env:
           CI: "true"
         run: |
-          pytest -q backend/tests/test_analytics_integration.py
+          pytest -q backend/tests
 
       # Logs on failure
       - name: Show service logs on failure
