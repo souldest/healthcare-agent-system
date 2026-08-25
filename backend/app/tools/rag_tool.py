@@ -1,5 +1,5 @@
-from app.rag.embeddings import create_embedding
-from app.rag.vector_store import search_documents
+from backend.app.rag.embeddings import create_embedding
+from backend.app.rag.vector_store import search_documents
 
 
 def search_medical_documents(

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.database.session import get_db
-from app.schemas.patient import PatientCreate, PatientResponse
-from app.repositories.patient_repository import (
+from backend.app.database.session import get_db
+from backend.app.schemas.patient import PatientCreate, PatientResponse
+from backend.app.repositories.patient_repository import (
     create_patient,
     get_patients
 )

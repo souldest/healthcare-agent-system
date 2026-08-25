@@ -1,32 +1,27 @@
-
 # Python
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
 
 # Environment
 .env
+
+# Backend
+backend/audit.log
+
+# Backup files
+*.bak
+*.backup
+*.before-*
 
 # Frontend dependencies/build
 frontend/node_modules/
 frontend/dist/
 
-# Local backups
-*.backup
-*.before-*
-*.py[cod]
-backend/audit.log
+# Local/generated data
+data/
+databricks_export/
 
-# Python
-__pycache__/
-*.py[cod]
-*.pyo
-
-# Frontend build
-frontend/dist/
-
-# Node
-frontend/node_modules/
-
-# Local environment
-.venv/
+# Generated Databricks dashboard artifacts
+healthcare_case_intelligence*.json

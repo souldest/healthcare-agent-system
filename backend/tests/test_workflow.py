@@ -1,7 +1,7 @@
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from app.workflows.case_workflow import CaseWorkflow
+from backend.app.workflows.case_workflow import CaseWorkflow
 
 
 def make_case():
@@ -63,18 +63,18 @@ def make_workflow(
 
 
 @patch(
-    "app.workflows.case_workflow.get_latest_human_review",
+    "backend.app.workflows.case_workflow.get_latest_human_review",
     return_value=None,
 )
 @patch(
-    "app.workflows.case_workflow.get_documents_for_case",
+    "backend.app.workflows.case_workflow.get_documents_for_case",
     return_value=[],
 )
 @patch(
-    "app.workflows.case_workflow.get_case",
+    "backend.app.workflows.case_workflow.get_case",
 )
 @patch(
-    "app.workflows.case_workflow.record_event",
+    "backend.app.workflows.case_workflow.record_event",
 )
 def test_workflow_completes_when_governance_allows_continue(
     record_event,
@@ -105,18 +105,18 @@ def test_workflow_completes_when_governance_allows_continue(
 
 
 @patch(
-    "app.workflows.case_workflow.get_latest_human_review",
+    "backend.app.workflows.case_workflow.get_latest_human_review",
     return_value=None,
 )
 @patch(
-    "app.workflows.case_workflow.get_documents_for_case",
+    "backend.app.workflows.case_workflow.get_documents_for_case",
     return_value=[],
 )
 @patch(
-    "app.workflows.case_workflow.get_case",
+    "backend.app.workflows.case_workflow.get_case",
 )
 @patch(
-    "app.workflows.case_workflow.record_event",
+    "backend.app.workflows.case_workflow.record_event",
 )
 def test_workflow_pauses_when_human_review_is_required(
     record_event,
@@ -150,17 +150,17 @@ def test_workflow_pauses_when_human_review_is_required(
 
 
 @patch(
-    "app.workflows.case_workflow.get_latest_human_review",
+    "backend.app.workflows.case_workflow.get_latest_human_review",
 )
 @patch(
-    "app.workflows.case_workflow.get_documents_for_case",
+    "backend.app.workflows.case_workflow.get_documents_for_case",
     return_value=[],
 )
 @patch(
-    "app.workflows.case_workflow.get_case",
+    "backend.app.workflows.case_workflow.get_case",
 )
 @patch(
-    "app.workflows.case_workflow.record_event",
+    "backend.app.workflows.case_workflow.record_event",
 )
 def test_workflow_continues_after_human_review_approval(
     record_event,
@@ -197,7 +197,7 @@ def test_workflow_continues_after_human_review_approval(
 
 
 @patch(
-    "app.workflows.case_workflow.get_case",
+    "backend.app.workflows.case_workflow.get_case",
     return_value=None,
 )
 def test_workflow_returns_error_for_unknown_case(

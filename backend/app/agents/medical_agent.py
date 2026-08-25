@@ -1,21 +1,21 @@
 import json
 
-from app.schemas.medical import MedicalAnalysis
+from backend.app.schemas.medical import MedicalAnalysis
 
-from app.agents.base_agent import BaseAgent
+from backend.app.agents.base_agent import BaseAgent
 
-from app.llm.provider import LLMProvider
-from app.llm.prompts import (
+from backend.app.llm.provider import LLMProvider
+from backend.app.llm.prompts import (
     MEDICAL_ANALYSIS_PROMPT,
     SICK_PAY_ANALYSIS_PROMPT
 )
 
-from app.tools.database_tool import (
+from backend.app.tools.database_tool import (
     get_case,
     get_documents_for_case
 )
 
-from app.tools.rag_tool import (
+from backend.app.tools.rag_tool import (
     search_medical_documents
 )
 

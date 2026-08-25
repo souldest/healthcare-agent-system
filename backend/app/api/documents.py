@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.database.base import get_db
-from app.models.document import Document
-from app.schemas.document import DocumentCreate, DocumentResponse
+from backend.app.database.base import get_db
+from backend.app.models.document import Document
+from backend.app.schemas.document import DocumentCreate, DocumentResponse
 
-from app.rag.embeddings import create_embedding
-from app.rag.vector_store import add_document
+from backend.app.rag.embeddings import create_embedding
+from backend.app.rag.vector_store import add_document
 
 
 router = APIRouter(

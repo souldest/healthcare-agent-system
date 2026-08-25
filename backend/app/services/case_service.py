@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from app.models.case import Case
-from app.schemas.case import CaseCreate
+from backend.app.models.case import Case
+from backend.app.schemas.case import CaseCreate
 
 def create_case(db: Session, case_data: CaseCreate):
 

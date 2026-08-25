@@ -30,8 +30,8 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-from app.database.base import Base
-from app.models import Patient
+from backend.app.database.base import Base
+from backend.app.models import Patient
 
 target_metadata = Base.metadata
 

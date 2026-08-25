@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from app.models.patient import Patient
-from app.models.case import Case
-from app.models.document import Document
+from backend.app.models.patient import Patient
+from backend.app.models.case import Case
+from backend.app.models.document import Document
 
 
 def get_patient(

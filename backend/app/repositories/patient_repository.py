@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from app.models.patient import Patient
-from app.schemas.patient import PatientCreate
+from backend.app.models.patient import Patient
+from backend.app.schemas.patient import PatientCreate
 
 
 def create_patient(

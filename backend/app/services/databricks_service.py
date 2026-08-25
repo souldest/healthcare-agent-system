@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.tools.databricks_tool import execute_databricks_sql
+from backend.app.tools.databricks_tool import execute_databricks_sql
 
 
 class DatabricksService:

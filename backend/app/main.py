@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 
-from app.api.patients import router as patients_router
-from app.api.cases import router as cases_router
-from app.api.documents import router as documents_router
-from app.api.rag import router as rag_router
-from app.api.agents import router as agents_router
-from app.api.insurer import router as insurer_router
-from app.api.member import router as member_router
-from app.api.analytics import router as analytics_router
+from backend.app.api.patients import router as patients_router
+from backend.app.api.cases import router as cases_router
+from backend.app.api.documents import router as documents_router
+from backend.app.api.rag import router as rag_router
+from backend.app.api.agents import router as agents_router
+from backend.app.api.insurer import router as insurer_router
+from backend.app.api.member import router as member_router
+from backend.app.api.analytics import router as analytics_router
 
 
 app = FastAPI(

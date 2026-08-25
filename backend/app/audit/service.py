@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from app.audit.models import create_audit_event
+from backend.app.audit.models import create_audit_event
 
 
 AUDIT_LOG = Path(__file__).resolve().parents[2] / "audit.log"

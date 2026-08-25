@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.agents.governance_agent import GovernanceAgent
+from backend.app.agents.governance_agent import GovernanceAgent
 
 
 def make_case():

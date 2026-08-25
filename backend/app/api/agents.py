@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.database.base import get_db
-from app.workflows.case_workflow import CaseWorkflow
-from app.audit.service import (
+from backend.app.database.base import get_db
+from backend.app.workflows.case_workflow import CaseWorkflow
+from backend.app.audit.service import (
     get_case_history,
     record_human_review,
 )

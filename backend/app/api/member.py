@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.database.base import get_db
-from app.models.patient import Patient
-from app.models.case import Case
-from app.rag.embeddings import create_embedding
-from app.rag.vector_store import search_documents
+from backend.app.database.base import get_db
+from backend.app.models.patient import Patient
+from backend.app.models.case import Case
+from backend.app.rag.embeddings import create_embedding
+from backend.app.rag.vector_store import search_documents
 
 
 router = APIRouter(

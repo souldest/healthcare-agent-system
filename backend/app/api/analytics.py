@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from app.services.databricks_service import databricks_service
+from backend.app.services.databricks_service import databricks_service
 
 
 router = APIRouter(

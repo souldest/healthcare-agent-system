@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, ForeignKey
 from sqlalchemy.orm import relationship
 
-from app.database.base import Base
+from backend.app.database.base import Base
 
 
 class Case(Base):

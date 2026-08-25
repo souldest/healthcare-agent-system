@@ -1,15 +1,15 @@
-from app.agents.medical_agent import MedicalAgent
-from app.agents.triage_agent import TriageAgent
-from app.agents.data_quality_agent import DataQualityAgent
-from app.agents.process_agent import ProcessAgent
-from app.agents.governance_agent import GovernanceAgent
+from backend.app.agents.medical_agent import MedicalAgent
+from backend.app.agents.triage_agent import TriageAgent
+from backend.app.agents.data_quality_agent import DataQualityAgent
+from backend.app.agents.process_agent import ProcessAgent
+from backend.app.agents.governance_agent import GovernanceAgent
 
-from app.tools.database_tool import (
+from backend.app.tools.database_tool import (
     get_case,
     get_documents_for_case
 )
 
-from app.audit.service import (
+from backend.app.audit.service import (
     record_event,
     get_latest_human_review
 )

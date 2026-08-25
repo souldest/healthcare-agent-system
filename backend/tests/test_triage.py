@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.agents.triage_agent import TriageAgent
+from backend.app.agents.triage_agent import TriageAgent
 
 
 def make_case(description):

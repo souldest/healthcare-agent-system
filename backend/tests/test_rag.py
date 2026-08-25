@@ -1,4 +1,4 @@
-from app.tools.rag_tool import search_medical_documents
+from backend.app.tools.rag_tool import search_medical_documents
 
 
 def test_rag_search_filters_by_case_id():
