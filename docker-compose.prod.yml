@@ -23,13 +23,26 @@ services:
     container_name: healthcare-backend
     ports:
       - "8002:8000"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
     environment:
       CHROMA_HOST: healthcare-chroma
       CHROMA_PORT: "8000"
+
       DATABASE_URL: postgresql://healthcare:healthcare@postgres:5432/healthcare_ai
+
+      OLLAMA_URL: http://host.docker.internal:11434/api/generate
+      OLLAMA_EMBED_URL: http://host.docker.internal:11434/api/embed
+      LLM_PROVIDER: ollama
+      LLM_MODEL: llama3.2:3b
+      EMBEDDING_MODEL: nomic-embed-text:latest
+
       DATABRICKS_HOST: ${DATABRICKS_HOST}
       DATABRICKS_WAREHOUSE_ID: ${DATABRICKS_WAREHOUSE_ID}
       DATABRICKS_TOKEN: ${DATABRICKS_TOKEN}
+
     depends_on:
       - postgres
       - chromadb
