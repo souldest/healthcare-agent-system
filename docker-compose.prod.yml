@@ -11,6 +11,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U healthcare -d healthcare_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   chromadb:
     image: chromadb/chroma
@@ -44,8 +49,15 @@ services:
       DATABRICKS_TOKEN: ${DATABRICKS_TOKEN}
 
     depends_on:
-      - postgres
-      - chromadb
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+
+    command:
+      - sh
+      - -c
+      - alembic -c /app/backend/alembic.ini upgrade head && exec uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 
   frontend:
     image: ghcr.io/souldest/healthcare-agent-system/frontend:${APP_VERSION:-latest}
