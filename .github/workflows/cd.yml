@@ -9,17 +9,23 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: production
+  cancel-in-progress: false
+
 jobs:
-  build-release:
+
+  build:
     name: Build and Publish Release
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Validate Docker Compose
-        run: docker compose config
+        run: docker compose -f docker-compose.prod.yml config
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -28,40 +34,108 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set image names
-        run: |
-          echo "BACKEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/backend" >> "$GITHUB_ENV"
-          echo "FRONTEND_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/frontend" >> "$GITHUB_ENV"
-
-      - name: Build and push backend image
+      - name: Build and push backend
         uses: docker/build-push-action@v6
         with:
           context: .
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ env.BACKEND_IMAGE }}:${{ github.ref_name }}
-            ${{ env.BACKEND_IMAGE }}:latest
+            ghcr.io/${{ github.repository_owner }}/healthcare-agent-system/backend:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/healthcare-agent-system/backend:latest
 
-      - name: Build and push frontend image
+      - name: Build and push frontend
         uses: docker/build-push-action@v6
         with:
           context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.FRONTEND_IMAGE }}:${{ github.ref_name }}
-            ${{ env.FRONTEND_IMAGE }}:latest
+            ghcr.io/${{ github.repository_owner }}/healthcare-agent-system/frontend:${{ github.ref_name }}
+            ghcr.io/${{ github.repository_owner }}/healthcare-agent-system/frontend:latest
 
-      - name: Summary
-        run: |
-          echo "========================================"
-          echo "GHCR release published successfully"
-          echo "========================================"
-          echo "Backend:"
-          echo "  $BACKEND_IMAGE:${GITHUB_REF_NAME}"
-          echo "  $BACKEND_IMAGE:latest"
-          echo
-          echo "Frontend:"
-          echo "  $FRONTEND_IMAGE:${GITHUB_REF_NAME}"
-          echo "  $FRONTEND_IMAGE:latest"
-          echo "========================================"
+  deploy:
+    name: Deploy to Production
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    steps:
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        env:
+          RELEASE_VERSION: ${{ github.ref_name }}
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          envs: RELEASE_VERSION
+          script_stop: true
+          script: |
+            set -e
+
+            cd /opt/healthcare-agent-system
+
+            echo "Deploying ${RELEASE_VERSION}"
+
+            export APP_VERSION="${RELEASE_VERSION}"
+
+            docker compose \
+              --env-file .env \
+              -f docker-compose.prod.yml \
+              pull
+
+            docker compose \
+              --env-file .env \
+              -f docker-compose.prod.yml \
+              up -d --force-recreate
+
+            echo "Waiting for backend..."
+
+            for i in $(seq 1 30); do
+              if curl -fsS http://localhost:8002/health > /dev/null; then
+                echo "Backend healthcheck passed"
+                break
+              fi
+
+              if [ "$i" -eq 30 ]; then
+                echo "Backend healthcheck failed"
+                docker compose \
+                  --env-file .env \
+                  -f docker-compose.prod.yml \
+                  logs --tail=100 backend
+                exit 1
+              fi
+
+              sleep 2
+            done
+
+            echo "Waiting for frontend..."
+
+            for i in $(seq 1 30); do
+              if curl -fsS http://localhost:5174 > /dev/null; then
+                echo "Frontend healthcheck passed"
+                break
+              fi
+
+              if [ "$i" -eq 30 ]; then
+                echo "Frontend healthcheck failed"
+                docker compose \
+                  --env-file .env \
+                  -f docker-compose.prod.yml \
+                  logs --tail=100 frontend
+                exit 1
+              fi
+
+              sleep 2
+            done
+
+            echo "Deployment successful"
+
+            docker compose \
+              --env-file .env \
+              -f docker-compose.prod.yml \
+              ps
