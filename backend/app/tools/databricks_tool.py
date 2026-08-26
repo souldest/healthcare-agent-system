@@ -105,10 +105,25 @@ def _response_to_rows(
     rows = response["result"]["data_array"]
     names = [column["name"] for column in columns]
 
-    return [
-        dict(zip(names, row))
-        for row in rows
-    ]
+    numeric_fields = {
+        "total_cases",
+        "open_cases",
+        "high_priority_cases",
+        "closed_cases",
+    }
+
+    result = []
+
+    for row in rows:
+        item = dict(zip(names, row))
+
+        for field in numeric_fields:
+            if field in item and item[field] is not None:
+                item[field] = int(item[field])
+
+        result.append(item)
+
+    return result
 
 
 def get_case_analytics() -> list[dict[str, Any]]:
@@ -141,9 +156,7 @@ def get_sick_pay_analytics() -> list[dict[str, Any]]:
             case_type,
             total_cases,
             open_cases,
-            high_priority_cases,
-            oldest_case,
-            newest_case
+            high_priority_cases
         FROM sick_pay_analytics
         ORDER BY case_type
         """

@@ -20,7 +20,8 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: healthcare-backend
     ports:
       - "8002:8000"
@@ -32,7 +33,7 @@ services:
       DATABRICKS_WAREHOUSE_ID: ${DATABRICKS_WAREHOUSE_ID}
       DATABRICKS_TOKEN: ${DATABRICKS_TOKEN}
     volumes:
-      - ./backend:/app
+      - ./backend:/app/backend
     depends_on:
       - postgres
       - chromadb
@@ -42,7 +43,7 @@ services:
       context: ./frontend
     container_name: healthcare-frontend
     ports:
-      - "5174:5173"
+      - "5174:5174"
     volumes:
       - ./frontend:/app
       - /app/node_modules

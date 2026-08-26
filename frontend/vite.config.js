@@ -10,17 +10,17 @@ export default defineConfig({
 
     proxy: {
       "/api": {
-        target: "http://localhost:8002",
+        target: "http://backend:8000",
         changeOrigin: true,
       },
 
       "/patients": {
-        target: "http://localhost:8002",
+        target: "http://backend:8000",
         changeOrigin: true,
       },
 
       "/cases": {
-        target: "http://localhost:8002",
+        target: "http://backend:8000",
         changeOrigin: true,
       },
     },
