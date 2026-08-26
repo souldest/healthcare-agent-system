@@ -73,7 +73,6 @@ jobs:
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           envs: RELEASE_VERSION
-          script_stop: true
           script: |
             set -e
 
