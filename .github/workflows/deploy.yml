@@ -18,6 +18,31 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: banking
+          POSTGRES_PASSWORD: banking
+          POSTGRES_DB: banking_poc
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U banking -d banking_poc"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - 11434:11434
+
+    env:
+      DATABASE_URL: postgresql+psycopg://banking:banking@localhost:5432/banking_poc
+      OLLAMA_URL: http://localhost:11434
+      OLLAMA_MODEL: llama3.2:1b
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,6 +56,33 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
+
+      - name: Wait for Ollama
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:11434/api/tags >/dev/null; then
+              echo "Ollama ready."
+              exit 0
+            fi
+            echo "Waiting for Ollama..."
+            sleep 2
+          done
+
+          echo "Ollama did not become ready."
+          exit 1
+
+      - name: Pull Ollama model
+        run: |
+          curl -fsS http://localhost:11434/api/pull \
+            -d '{"name":"llama3.2:1b","stream":false}'
+
+      - name: Verify Ollama model
+        run: |
+          curl -fsS http://localhost:11434/api/tags |             python -c "import json,sys; models=json.load(sys.stdin).get('models', []); names=[m.get('name') for m in models]; assert 'llama3.2:1b' in names, f'Model not found: {names}'"
+
+      - name: Seed test database
+        working-directory: backend
+        run: python seed.py
 
       - name: Run backend tests
         working-directory: backend
