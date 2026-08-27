@@ -144,6 +144,7 @@ jobs:
     name: Deploy to Hetzner
     needs: docker
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - name: Deploy via SSH
@@ -152,9 +153,9 @@ jobs:
           BACKEND_IMAGE: ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
           FRONTEND_IMAGE: ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
         with:
-          host: ${{ secrets.HETZNER_HOST }}
-          username: ${{ secrets.HETZNER_USER }}
-          key: ${{ secrets.HETZNER_SSH_KEY }}
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
           envs: BACKEND_IMAGE,FRONTEND_IMAGE
           script: |
             set -e
