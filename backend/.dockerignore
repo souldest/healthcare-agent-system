@@ -1,0 +1,8 @@
+__pycache__
+.pytest_cache
+.coverage
+*.pyc
+*.pyo
+*.bak
+*.before_ai
+tests

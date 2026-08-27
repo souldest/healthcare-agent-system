@@ -29,3 +29,4 @@ frontend/dist/
 # Backup / temporary files
 *.bak
 *.before_ai
+.env.prod.local
