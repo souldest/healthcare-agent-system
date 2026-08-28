@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 MODEL = "llama3.2:1b"
 ENDPOINT = os.getenv("OLLAMA_URL", "http://localhost:11434")
+MINIMUM_SCORE = 0.80
 
 with open(ROOT / "mlops" / "model.yaml", encoding="utf-8") as f:
     model_config = f.read()
@@ -16,6 +17,7 @@ with open(ROOT / "mlops" / "evaluation" / "cases.json", encoding="utf-8") as f:
     cases = json.load(f)
 
 passed = 0
+results = []
 
 for case in cases:
     payload = json.dumps({
@@ -46,13 +48,31 @@ for case in cases:
             and output["reason"].strip()
         ):
             print(f"[PASS] {case['id']}")
+            results.append({
+                "id": case["id"],
+                "status": "PASS",
+                "expected_risk": case["expected_risk"],
+                "output": output,
+            })
             passed += 1
         else:
             print(f"[FAIL] {case['id']}")
             print(f"       output: {raw_output[:500]}")
+            results.append({
+                "id": case["id"],
+                "status": "FAIL",
+                "expected_risk": case["expected_risk"],
+                "output": raw_output[:500],
+            })
 
     except Exception as exc:
         print(f"[FAIL] {case['id']}: {exc}")
+        results.append({
+            "id": case["id"],
+            "status": "FAIL",
+            "expected_risk": case["expected_risk"],
+            "error": str(exc),
+        })
 
 score = passed / len(cases)
 
@@ -61,10 +81,20 @@ print(f"Model: {MODEL}")
 print(f"Passed: {passed}/{len(cases)}")
 print(f"Score: {score:.2%}")
 
-minimum_score = 0.80
+Path("mlops-evaluation-result.json").write_text(
+    json.dumps({
+        "model": MODEL,
+        "passed": passed,
+        "total": len(cases),
+        "score": score,
+        "minimum_score": MINIMUM_SCORE,
+        "results": results,
+    }, indent=2),
+    encoding="utf-8",
+)
 
-if score < minimum_score:
-    print(f"MLOps quality gate FAILED (minimum {minimum_score:.0%})")
+if score < MINIMUM_SCORE:
+    print(f"MLOps quality gate FAILED (minimum {MINIMUM_SCORE:.0%})")
     sys.exit(1)
 
-print(f"MLOps quality gate PASSED (minimum {minimum_score:.0%})")
+print(f"MLOps quality gate PASSED (minimum {MINIMUM_SCORE:.0%})")
