@@ -30,3 +30,16 @@ frontend/dist/
 *.bak
 *.before_ai
 .env.prod.local
+
+# Local backups
+backups/
+*.bak
+*.bak_*
+
+# PostgreSQL SSL/private keys
+postgres-ssl/server.key
+postgres-ssl/*.key
+
+# Local environment
+.env
+postgres-ssl/
