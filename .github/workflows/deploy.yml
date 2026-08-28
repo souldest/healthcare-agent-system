@@ -161,7 +161,7 @@ jobs:
 
       - name: Upload MLOps evaluation result
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mlops-evaluation-${{ github.sha }}
           path: mlops-evaluation-result.json
