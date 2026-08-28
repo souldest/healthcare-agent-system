@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import urllib.request
 from pathlib import Path
@@ -6,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 MODEL = "llama3.2:1b"
-ENDPOINT = __import__("os").getenv("OLLAMA_URL", "http://localhost:11434")
+ENDPOINT = os.getenv("OLLAMA_URL", "http://localhost:11434")
 
 with open(ROOT / "mlops" / "model.yaml", encoding="utf-8") as f:
     model_config = f.read()

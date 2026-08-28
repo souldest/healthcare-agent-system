@@ -103,9 +103,68 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+
+  mlops:
+    name: MLOps Evaluation
+    needs: test
+    runs-on: ubuntu-latest
+
+    services:
+      ollama:
+        image: ollama/ollama:latest
+        ports:
+          - 11434:11434
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Wait for Ollama
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:11434/api/tags >/dev/null; then
+              echo "Ollama ready."
+              exit 0
+            fi
+
+            echo "Waiting for Ollama..."
+            sleep 2
+          done
+
+          echo "Ollama did not become ready."
+          exit 1
+
+      - name: Pull evaluation model
+        run: |
+          curl -fsS http://localhost:11434/api/pull \
+            -d '{"name":"llama3.2:1b","stream":false}'
+
+      - name: Verify model
+        run: |
+          curl -fsS http://localhost:11434/api/tags |
+            python -c '
+          import json
+          import sys
+
+          models = json.load(sys.stdin).get("models", [])
+          names = [m.get("name") for m in models]
+
+          assert "llama3.2:1b" in names, f"Model not found: {names}"
+          print("Model verified: llama3.2:1b")
+          '
+
+      - name: Run MLOps quality gate
+        env:
+          OLLAMA_URL: http://localhost:11434
+        run: |
+          python mlops/evaluation/evaluate.py
+
+
   docker:
     name: Build and Push Docker Images
-    needs: test
+    needs:
+      - test
+      - mlops
     runs-on: ubuntu-latest
 
     steps:
