@@ -1,0 +1,7 @@
+model:
+  provider: ollama
+  name: llama3.2:1b
+  endpoint: http://localhost:11434
+
+evaluation:
+  minimum_score: 0.80

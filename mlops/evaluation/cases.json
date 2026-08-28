@@ -1,0 +1,17 @@
+[
+  {
+    "id": "json-low-risk",
+    "prompt": "Return exactly this JSON and nothing else: {\"risk\":\"low\",\"reason\":\"stable income and low debt\"}",
+    "expected_risk": "low"
+  },
+  {
+    "id": "json-medium-risk",
+    "prompt": "Return exactly this JSON and nothing else: {\"risk\":\"medium\",\"reason\":\"moderate income and moderate debt\"}",
+    "expected_risk": "medium"
+  },
+  {
+    "id": "json-high-risk",
+    "prompt": "Return exactly this JSON and nothing else: {\"risk\":\"high\",\"reason\":\"unstable income and high debt\"}",
+    "expected_risk": "high"
+  }
+]
