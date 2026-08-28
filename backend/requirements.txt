@@ -6,3 +6,5 @@ psycopg[binary]==3.2.9
 pytest
 pytest-cov
 httpx
+
+databricks-sql-connector==4.2.3
