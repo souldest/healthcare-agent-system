@@ -8,6 +8,6 @@ resources:
 
 images:
   - name: ghcr.io/souldest/healthcare-agent-system/backend
-    newTag: faff66235bb21019245fe63cbc54ffb6c262f4d9
+    newTag: 8137ba073465a2c6250d5b9b515a68030c175a3a
   - name: ghcr.io/souldest/healthcare-agent-system/frontend
-    newTag: faff66235bb21019245fe63cbc54ffb6c262f4d9
+    newTag: 8137ba073465a2c6250d5b9b515a68030c175a3a
