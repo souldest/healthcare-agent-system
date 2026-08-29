@@ -5,6 +5,7 @@ namespace: healthcare-agent-system
 
 resources:
   - ../../base
+  - ingress.yaml
 
 images:
   - name: ghcr.io/souldest/healthcare-agent-system/backend
