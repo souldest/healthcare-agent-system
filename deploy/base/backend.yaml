@@ -22,7 +22,7 @@ spec:
                 name: healthcare-agent-config
           env:
             - name: OLLAMA_URL
-              value: "http://ollama:11434"
+              value: "http://46.62.250.100:11434"
             - name: OLLAMA_MODEL
               value: "llama3.2:1b"
           readinessProbe:
